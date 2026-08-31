@@ -503,11 +503,11 @@ Day 1 goal:
 
 * [x] FastAPI skeleton
 * [x] Health endpoint
-* [ ] Environment configuration
-* [ ] SQLAlchemy setup
-* [ ] PostgreSQL configuration
-* [ ] Supabase connection
-* [ ] Database initialization/migration strategy
+* [x] Environment configuration
+* [x] SQLAlchemy setup
+* [x] PostgreSQL configuration
+* [ ] Supabase connection (configured; awaiting Supabase project credentials in .env/Render)
+* [x] Database initialization/migration strategy
 * [x] Basic API endpoint
 
 ---
