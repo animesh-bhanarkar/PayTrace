@@ -1,0 +1,1 @@
+"""PayTrace Backend Application."""
