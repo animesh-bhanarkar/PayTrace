@@ -399,15 +399,63 @@ Only include claims in the final submission that are supported by actual build-l
 
 ---
 
-# 11. CURRENT LOG STATUS
+# 11. LOGGED INCIDENTS & ENGINEERING ENTRIES
 
-**Implementation has not started yet.**
+## 2026-09-01 — Supabase Direct Latency from Local Machine vs Deployed Render
 
-Therefore:
+**Status:** Resolved
 
-> **No engineering incidents have been recorded yet.**
+### Problem
 
-The first real entry should be added only when a genuine engineering problem occurs.
+Supabase connection latency was ~2.4-2.6s when connecting directly from the local development machine.
+
+### Observed Behavior
+
+Local database health probes and direct connection attempts showed consistent ping/query latency of 2400-2600ms, raising potential concern regarding API roundtrip latency.
+
+### Expected Behavior
+
+Database roundtrip latency should be sufficiently low (<500ms) for high-performance webhook handling and investigation workflows.
+
+### Root Cause
+
+Geographic distance between the local development machine location and the Supabase PostgreSQL cluster located in the `ap-northeast-2` (Seoul) region.
+
+### Investigation
+
+Repeated local connection tests confirmed the ~2.4-2.6s latency was consistent across multiple queries and connection pool cycles, ruling out a one-time cold-start or temporary network anomaly.
+
+### Fix
+
+Deployed the FastAPI backend to Render (`https://paytrace-backend-ys0y.onrender.com`) and tested database connectivity and probe persistence from the live deployed environment to Supabase.
+
+### Test
+
+1. Executed `GET /health` against the deployed Render URL to test database connection status and measure cold-start latency.
+2. Executed `POST /db/probe` and `GET /db/probes` on the live Render service to perform complete record persistence and retrieval against Supabase PostgreSQL.
+
+### Result
+
+- Confirmed that Render's deployed instance connects to the same Supabase project at ~366-370ms latency.
+- Cold-start latency on the first request after idle was measured at 1291ms.
+- Confirmed the high latency is specific to local development access due to geographic routing and does not affect the production/demo path, since judges and users interact directly with the deployed Render backend.
+
+### Engineering Lesson
+
+Local development latency to a managed database is not necessarily representative of production latency once both services are colocated in compatible regions; verify against the deployed path before treating a local number as a real problem.
+
+### Related Files / Components
+
+- `backend/app/database.py`
+- `backend/app/main.py`
+- `render.yaml`
+- `scripts/verify_db_and_deploy.py`
+- Supabase PostgreSQL (`ap-northeast-2`)
+- Render Web Service (`https://paytrace-backend-ys0y.onrender.com`)
+
+### Commit
+
+`test: verify Supabase and Render deployment end-to-end`
 
 ---
 

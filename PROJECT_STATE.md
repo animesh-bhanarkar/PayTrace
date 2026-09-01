@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Pre-Day 1 — Final Architecture Finalized
-**Updated by:** GPT — final state review
+**Last updated:** Day 1 — Supabase & Render Live Verification Complete
+**Updated by:** Antigravity — live verification of Supabase PostgreSQL and Render backend
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -16,7 +16,7 @@
 
 # 1. CURRENT PHASE
 
-**Day 1 — Foundation + Deployment Skeleton**
+**Day 1 — Foundation + Deployment Skeleton (Backend + DB Live Verified)**
 
 The PayTrace product and architecture are frozen and approved in:
 
@@ -176,16 +176,18 @@ It must not be used to override the frozen architecture without the required rev
 * [x] Initial repository structure established (`backend/`, `frontend/`, `tests/`, `scenarios/`, `docs/`)
 * [x] `.gitignore` configured to ignore secrets (`.env`), Python caches, Node modules, build artifacts
 * [x] `.env.example` created listing required variables without values
-* [x] FastAPI backend application created with working `/health` and root `/` endpoints
-* [x] Automated test suite initialized with pytest testing the health and root endpoints
+* [x] FastAPI backend application created with working `/health`, `/`, `/db/probe`, and `/db/probes` endpoints
+* [x] Automated test suite initialized with pytest passing all unit tests
 * [x] React + TypeScript + Tailwind CSS frontend application created and verified building
+* [x] Supabase PostgreSQL connected via SQLAlchemy with live verified table creation, persistence, and retrieval
+* [x] Render Free Web Service deployed with public HTTPS URL (`https://paytrace-backend-ys0y.onrender.com`)
+* [x] Live end-to-end backend verification completed against Render + Supabase (observed cold start: 1291ms, Render-to-Supabase latency: 366-370ms)
 
 ---
 
 # 5. IN PROGRESS
 
-* [ ] Connect Supabase PostgreSQL & configure SQLAlchemy
-* [ ] Public deployment skeleton (Render & Vercel)
+* [ ] Deploy Vercel frontend & configure frontend ↔ backend CORS
 * [ ] Razorpay webhook endpoint & signature verification
 
 ---
@@ -204,7 +206,7 @@ None.
 
 # 8. LAST COMPLETED TASK
 
-Initial repository structure, FastAPI backend foundation with `/health` endpoint, and React + TypeScript + Tailwind CSS frontend placeholder established and tested.
+End-to-end live verification of Supabase PostgreSQL and Render backend deployment (`https://paytrace-backend-ys0y.onrender.com`), confirming `/health` endpoint, cold-start latency (1291ms), Render-to-Supabase latency (366-370ms), and live record persistence/retrieval.
 
 ---
 
@@ -417,12 +419,12 @@ Do not implement a production SQLite file merely because local development is ea
 
 # 13A. POSTGRESQL-FIRST DEVELOPMENT REQUIREMENT
 
-- [ ] Supabase PostgreSQL is connected early on Day 1.
-- [ ] SQLAlchemy models are validated against PostgreSQL before the database layer is considered complete.
-- [ ] Local SQLite may be used only as a convenience for isolated development/testing.
-- [ ] Production schema assumptions remain PostgreSQL-compatible.
-- [ ] Database development is not performed entirely against SQLite before PostgreSQL validation.
-- [ ] Database migration mechanism selected as an implementation detail compatible with SQLAlchemy + Supabase PostgreSQL.
+- [x] Supabase PostgreSQL is connected early on Day 1.
+- [x] SQLAlchemy models are validated against PostgreSQL before the database layer is considered complete.
+- [x] Local SQLite may be used only as a convenience for isolated development/testing.
+- [x] Production schema assumptions remain PostgreSQL-compatible.
+- [x] Database development is not performed entirely against SQLite before PostgreSQL validation.
+- [x] Database migration mechanism selected as an implementation detail compatible with SQLAlchemy + Supabase PostgreSQL.
 
 ---
 
@@ -506,7 +508,7 @@ Day 1 goal:
 * [x] Environment configuration
 * [x] SQLAlchemy setup
 * [x] PostgreSQL configuration
-* [ ] Supabase connection (configured; awaiting Supabase project credentials in .env/Render)
+* [x] Supabase connection (live verified against Supabase PostgreSQL)
 * [x] Database initialization/migration strategy
 * [x] Basic API endpoint
 
@@ -525,12 +527,13 @@ Day 1 goal:
 
 ## Render
 
-* [ ] Render account/project configured
-* [ ] FastAPI deployed
-* [ ] Public HTTPS endpoint confirmed
-* [ ] Health endpoint confirmed
-* [ ] Environment variables configured
-* [ ] Supabase connection confirmed
+* [x] Render account/project configured
+* [x] FastAPI deployed (`https://paytrace-backend-ys0y.onrender.com`)
+* [x] Public HTTPS endpoint confirmed
+* [x] Health endpoint confirmed (returns HTTP 200, `database.connected = true`)
+* [x] Environment variables configured (`DATABASE_URL`, `ALLOWED_ORIGINS`)
+* [x] Supabase connection confirmed (366-370ms live query latency)
+* [x] Cold-start latency observed and recorded (1291ms)
 
 ---
 
@@ -547,12 +550,12 @@ Day 1 goal:
 
 ## Supabase
 
-* [ ] Supabase project configured
-* [ ] PostgreSQL database available
-* [ ] Database URL configured securely
-* [ ] SQLAlchemy successfully connects
-* [ ] Test record can be persisted
-* [ ] Test record can be retrieved
+* [x] Supabase project configured (`ap-northeast-2` region)
+* [x] PostgreSQL database available
+* [x] Database URL configured securely via environment variables
+* [x] SQLAlchemy successfully connects
+* [x] Test record can be persisted (`SystemProbe` created and committed live)
+* [x] Test record can be retrieved (`SystemProbe` retrieved live both directly and via Render API)
 
 ---
 
