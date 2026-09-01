@@ -8,10 +8,12 @@ from typing import Optional, Any
 
 from app.config import settings
 from app.database import get_db, get_engine, check_db_connection, Base
-from app.models import SystemProbe
+from app.models import SystemProbe, WebhookEvent  # noqa: F401 — ensure all models are registered
+from app.routers import webhooks
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("paytrace")
+
 
 
 @asynccontextmanager
@@ -47,6 +49,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(webhooks.router)
+
+
 
 class ProbeRequest(BaseModel):
     probe_name: str = "supabase_roundtrip_test"
@@ -69,6 +74,7 @@ def health():
         "status": "ok",
         "service": "paytrace-backend",
         "database": db_status,
+        "webhook_secret_configured": bool(settings.RAZORPAY_WEBHOOK_SECRET),
     }
 
 
