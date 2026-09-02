@@ -485,7 +485,58 @@ No secrets.
 
 No unsupported claims.
 
-No rewriting history.
+## 2026-09-02 — Render Deployment Synchronization Failure
+
+**Status:** Open
+
+### Problem
+
+The deployed Render endpoint is returning `404 Not Found` for the Razorpay webhook endpoint (`/webhooks/razorpay`) during live verification testing.
+
+### Observed Behavior
+
+Live requests sent to the deployed URL (`https://paytrace-backend-ys0y.onrender.com/webhooks/razorpay`) fail with a 404 status. Additionally, the `/health` endpoint does not return the newly added `webhook_secret_configured` key, indicating that the live server is running the older code from `ee51966` instead of the newest commits (`ba01521` and `704ff06`). The same endpoint works perfectly when tested locally on `http://127.0.0.1:8000/webhooks/razorpay` using identical simulated webhook payloads.
+
+### Expected Behavior
+
+The deployed Render instance should automatically pull from the latest `main` branch commit and update its routes, successfully processing the incoming webhook payloads with a `200 OK` (for valid signatures) and `403 Forbidden` (for invalid signatures).
+
+### Root Cause
+
+Root cause under investigation. Render auto-deploy from GitHub might be disabled, delayed, or failing silently in the background.
+
+### Investigation
+
+1. Sent simulated valid and invalid webhook requests using a Python script against the local uvicorn instance, confirming the code accurately handles signatures, rejection, and persistence.
+2. Attempted to send the same simulated webhooks to the deployed URL, resulting in a `404 Not Found`.
+3. Validated the `/health` endpoint on Render, which confirmed the deployed version was an older commit that did not include the webhook routing or secret validation output.
+4. Created an empty commit (`376caec`) and pushed to `origin/main` to force a deployment trigger, but Render has still not synchronized with the repository.
+
+### Fix
+
+Pending. Requires manual intervention in the Render dashboard to either trigger a manual deploy, fix the deployment pipeline, or check build logs for silent failures.
+
+### Test
+
+A test script `scripts/test_live_webhook.py` has been created to send simulated Razorpay webhooks (both valid and invalid).
+
+### Result
+
+Local test passed successfully. Live test failed due to deployment synchronization failure.
+
+### Engineering Lesson
+
+Always verify the exact deployed application version via a health endpoint or commit hash exposure before assuming a `404` or similar error indicates a code bug. Infrastructure synchronization can lag behind repository state.
+
+### Related Files / Components
+
+- `backend/app/main.py`
+- `render.yaml`
+- Render Web Service Deployment
+
+### Commit
+
+`not yet committed`
 
 ---
 
