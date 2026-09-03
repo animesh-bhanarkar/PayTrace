@@ -9,7 +9,10 @@ export default function App() {
   const [backendHealth, setBackendHealth] = useState<string>('checking...')
 
   useEffect(() => {
-    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
+    const apiBaseUrl = (
+      import.meta.env.VITE_API_BASE_URL ||
+      (import.meta.env.PROD ? 'https://paytrace-backend-ys0y.onrender.com' : 'http://localhost:8000')
+    ).replace(/\/$/, '')
     fetch(`${apiBaseUrl}/health`)
       .then((res) => {
         if (!res.ok) {
