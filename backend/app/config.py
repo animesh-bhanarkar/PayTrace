@@ -16,7 +16,7 @@ class Settings:
     RAZORPAY_KEY_SECRET: str = os.getenv("RAZORPAY_KEY_SECRET", "")
     RAZORPAY_WEBHOOK_SECRET: str = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "https://pay-trace-nine.vercel.app")
 
     @property
     def sqlalchemy_database_uri(self) -> str:
