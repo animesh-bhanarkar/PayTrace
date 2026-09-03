@@ -1,6 +1,8 @@
 import datetime
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Boolean, func
+from sqlalchemy.dialects.postgresql import UUID, JSONB, TIMESTAMP
 from app.database import Base
+import uuid
 
 
 class SystemProbe(Base):
@@ -58,3 +60,133 @@ class WebhookEvent(Base):
 
     # Processing notes: rejection reason or verification outcome detail
     processing_notes = Column(Text, nullable=True)
+
+
+# ---------------------------------------------------------------------------
+# Day 2 — Payment Intelligence Models
+# ---------------------------------------------------------------------------
+
+class NormalizedEvent(Base):
+    """
+    Normalised representation of a payment event drawn from any source
+    (webhook, API poll, or merchant-reported state).
+
+    Only verified events should be promoted here.  This table is the
+    evidence layer that feeds deterministic state reconstruction.
+    """
+    __tablename__ = "normalized_events"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+
+    # Razorpay event ID from the webhook payload / API response
+    event_id = Column(String(255), unique=True, nullable=False, index=True)
+
+    # e.g. payment.authorized | payment.captured | order.paid | payment.failed
+    event_type = Column(String(100), nullable=False, index=True)
+
+    # Razorpay entity identifiers
+    payment_id = Column(String(255), nullable=True, index=True)
+    order_id = Column(String(255), nullable=True, index=True)
+
+    # Timestamps
+    # event_timestamp: when the event actually occurred (from payload / API)
+    event_timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
+    # ingestion_timestamp: when PayTrace received and stored the event
+    ingestion_timestamp = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    # Data provenance
+    source = Column(String(50), nullable=False)           # webhook | api | merchant
+    status = Column(String(50), nullable=False)            # e.g. captured | failed | authorized
+    delivery_status = Column(String(50), nullable=True)   # e.g. delivered | delayed | missing
+
+    # Integrity
+    payload_hash = Column(String(64), nullable=True)       # SHA-256 of raw_payload
+    signature_valid = Column(Boolean, nullable=False)
+
+    # Full original payload for audit / replay
+    raw_payload = Column(JSONB, nullable=True)
+
+
+class PaymentState(Base):
+    """
+    Deterministic current state of a Razorpay payment, reconstructed
+    from all normalised events for that payment_id.
+
+    Updated whenever a new NormalizedEvent arrives for this payment.
+    Never mutated by AI — only by the deterministic state machine.
+    """
+    __tablename__ = "payment_states"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+
+    # Razorpay payment identifier — one row per payment
+    payment_id = Column(String(255), unique=True, nullable=False, index=True)
+    order_id = Column(String(255), nullable=True, index=True)
+
+    # The deterministic current state (e.g. captured, failed, authorized)
+    current_state = Column(String(50), nullable=False)
+
+    # When this record was last updated by the state machine
+    last_updated = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    # Ordered log of state transitions: list of {state, timestamp, event_id}
+    state_history = Column(JSONB, nullable=True)
+
+
+class Incident(Base):
+    """
+    A detected payment incident record.
+
+    Created by the incident detector for every anomaly found during
+    event normalization.  Never mutated by AI — only by the deterministic
+    pipeline.  AI may READ these records as evidence context.
+    """
+    __tablename__ = "incidents"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+
+    # Payment / order association (nullable — may be unknown for bad signatures)
+    payment_id = Column(String(255), nullable=True, index=True)
+    order_id = Column(String(255), nullable=True)
+
+    # Incident classification
+    incident_type = Column(String(100), nullable=False, index=True)
+    severity = Column(String(10), nullable=False)          # LOW | MEDIUM | HIGH
+    description = Column(String(1024), nullable=False)
+
+    # Evidence — list of event_id strings that triggered this incident
+    evidence_ids = Column(JSONB, nullable=True)
+
+    # Timestamps
+    detected_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    # Resolution
+    resolved = Column(Boolean, nullable=False, default=False)
+    resolution_notes = Column(String(1024), nullable=True)

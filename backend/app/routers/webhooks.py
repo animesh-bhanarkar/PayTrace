@@ -22,8 +22,12 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import WebhookEvent
+from app.models import WebhookEvent, NormalizedEvent, PaymentState, Incident
 from app.webhook_verifier import SignatureVerificationError, verify_razorpay_signature
+from app.event_parser import parse_webhook_to_normalized_event
+from app.state_reconstructor import reconstruct_payment_state
+from app.incident_detector import detect_incidents
+from app.authoritative_rules import apply_authoritative_rules
 
 logger = logging.getLogger("paytrace.webhooks")
 
@@ -185,6 +189,82 @@ async def receive_razorpay_webhook(
     db.commit()
     db.refresh(event)
 
+    # ── Day 2: Event Normalization Pipeline ────────────────────────────────
+    incident_count = 0
+    confidence_hint = "HIGH"
+    requires_ai_investigation = False
+    new_event = None
+    try:
+        # 1. Parse NormalizedEvent
+        new_event = parse_webhook_to_normalized_event(payload, signature_valid)
+
+        # 2. Query existing events for the same payment_id
+        existing_events = []
+        if new_event.payment_id:
+            existing_events = (
+                db.query(NormalizedEvent)
+                .filter(NormalizedEvent.payment_id == new_event.payment_id)
+                .all()
+            )
+
+        # 3. Reconstruct payment state
+        payment_state = reconstruct_payment_state(existing_events + [new_event])
+
+        # 4. Detect incidents
+        incidents = detect_incidents(
+            new_event,
+            existing_events,
+            payment_state.state_history,
+            signature_valid,
+        )
+        incident_count = len(incidents)
+
+        # 4b. Apply authoritative-source rules
+        auth_result = apply_authoritative_rules(payment_state, incidents)
+        confidence_hint = auth_result["confidence_hint"]
+        requires_ai_investigation = auth_result["requires_ai_investigation"]
+        logger.info(
+            "Authoritative rules: state=%s confidence=%s ai_required=%s reason=%s",
+            auth_result["authoritative_state"],
+            confidence_hint,
+            requires_ai_investigation,
+            auth_result["reason"],
+        )
+
+        # 5. Persist NormalizedEvent
+        db.add(new_event)
+
+        # 6. Upsert PaymentState (only if signature is valid)
+        if signature_valid and new_event.payment_id:
+            existing_state = (
+                db.query(PaymentState)
+                .filter(PaymentState.payment_id == new_event.payment_id)
+                .first()
+            )
+            if existing_state:
+                existing_state.current_state = payment_state.current_state
+                existing_state.state_history = payment_state.state_history
+                existing_state.last_updated = datetime.datetime.now(datetime.timezone.utc)
+            else:
+                db.add(payment_state)
+
+        # 7. Persist Incidents
+        for inc in incidents:
+            incident_row = Incident(
+                payment_id=inc.payment_id,
+                order_id=inc.order_id,
+                incident_type=inc.incident_type,
+                severity=inc.severity,
+                description=inc.description,
+                evidence_ids=inc.evidence_ids,
+            )
+            db.add(incident_row)
+
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error("Event Normalization Pipeline failed: %s", e)
+
     # ── Step 8: Return response ────────────────────────────────────────────
     if not signature_valid:
         # D-010: Return 403 so Razorpay knows we rejected it.
@@ -195,12 +275,20 @@ async def receive_razorpay_webhook(
         )
 
     logger.info(
-        "Webhook event persisted: record_id=%s event_type=%s entity_id=%s",
+        "Webhook event persisted: record_id=%s event_type=%s entity_id=%s incidents_detected=%d",
         event.id,
         event_type,
         entity_id,
+        incident_count
     )
-    return Response(status_code=200)
+    return {
+        "status": "accepted",
+        "event_type": event_type,
+        "payment_id": new_event.payment_id if new_event is not None else None,
+        "incidents_detected": incident_count,
+        "confidence_hint": confidence_hint,
+        "requires_ai_investigation": requires_ai_investigation,
+    }
 
 
 @router.get("/events")

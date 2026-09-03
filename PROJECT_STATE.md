@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Day 1 — Backend Live Webhook Acceptance Complete
-**Updated by:** Antigravity — verified genuine Razorpay webhook ingestion and signature validation on Render
+**Last updated:** Day 2, Step 1 — Event Normalization Models Implemented & Verified
+**Updated by:** Antigravity — NormalizedEvent & PaymentState models created, Supabase schema applied, live pytest passed
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -16,7 +16,7 @@
 
 # 1. CURRENT PHASE
 
-**Day 1 — Foundation + Deployment Skeleton (Backend + DB Live Verified)**
+**Day 2 — Payment Intelligence (Step 4: Incident Persistence & Authoritative Rules Complete)**
 
 The PayTrace product and architecture are frozen and approved in:
 
@@ -182,12 +182,25 @@ It must not be used to override the frozen architecture without the required rev
 * [x] Supabase PostgreSQL connected via SQLAlchemy with live verified table creation, persistence, and retrieval
 * [x] Render Free Web Service deployed with public HTTPS URL (`https://paytrace-backend-ys0y.onrender.com`)
 * [x] Live end-to-end backend verification completed against Render + Supabase (observed cold start: 1291ms, Render-to-Supabase latency: 366-370ms)
+* [x] Day 2, Step 1: NormalizedEvent and PaymentState SQLAlchemy models defined and schema applied to Supabase PostgreSQL
+* [x] Day 2, Step 1: Automated live test (`tests/test_normalized_event_model.py`) verified against live Supabase PostgreSQL (round-trip insert, retrieve, cleanup)
+* [x] Day 2, Step 2: Event Parser created (`parse_webhook_to_normalized_event`) handling graceful field extraction.
+* [x] Day 2, Step 2: Deterministic State Machine created (`PaymentStateMachine`) handling transitions.
+* [x] Day 2, Step 2: State Reconstructor created (`reconstruct_payment_state`) producing ordered history.
+* [x] Day 2, Step 2: 5 unit tests passed successfully.
+* [x] Day 2, Step 3: Incident Detector created handling 7 core anomaly types.
+* [x] Day 2, Step 3: 7 unit tests passed successfully for incident detector.
+* [x] Day 2, Step 3: Webhook pipeline updated to normalize events, run state machine, detect incidents, and return `incidents_detected` without modifying verification logic.
+* [x] Day 2, Step 4: `Incident` SQLAlchemy model added and schema applied to Supabase PostgreSQL.
+* [x] Day 2, Step 4: `authoritative_rules.py` created — deterministic confidence and AI-gate logic.
+* [x] Day 2, Step 4: Incidents persisted to DB per webhook event; `confidence_hint` and `requires_ai_investigation` returned in response.
+* [x] Day 2, Step 4: 5 unit tests (authoritative rules) + 2 live Supabase tests (incident persistence) all passed.
 
 ---
 
 # 5. IN PROGRESS
 
-None (Day 1 Complete — Ready for Day 2).
+Day 2 complete — next step is commit + push, then Day 3 (AI integration + frontend dashboard).
 
 ---
 
@@ -205,7 +218,7 @@ None.
 
 # 8. LAST COMPLETED TASK
 
-End-to-end live verification of Vercel frontend deployment (`https://pay-trace-nine.vercel.app`) and Render backend CORS integration. Visually confirmed live in browser: `Status: paytrace-backend (ok)` rendered on screen with zero CORS errors in console. Day 1 is fully complete.
+Day 2, Step 4: `Incident` model added to Supabase, `authoritative_rules.py` created with deterministic confidence/AI-gate logic. Incidents now persisted to DB per webhook. Response body expanded to include `confidence_hint` and `requires_ai_investigation`. 7 tests pass (5 unit + 2 live Supabase). Manual webhook simulation confirmed full pipeline.
 
 ---
 
@@ -668,21 +681,21 @@ The real webhook requirement remains mandatory for Day 1 completion and must nev
 
 Tasks:
 
-* [ ] Normalized event schema
-* [ ] Event parser
-* [ ] Event timestamp
-* [ ] Ingestion timestamp
-* [ ] Deterministic state machine
-* [ ] Authoritative-source rules
-* [ ] Duplicate detection
-* [ ] Delayed event detection
-* [ ] Out-of-order event handling
-* [ ] Contradiction detection
-* [ ] Incident creation
+* [x] Normalized event schema
+* [x] Event parser
+* [x] Event timestamp
+* [x] Ingestion timestamp
+* [x] Deterministic state machine
+* [x] Authoritative-source rules
+* [x] Duplicate detection
+* [x] Delayed event detection
+* [x] Out-of-order event handling
+* [x] Contradiction detection
+* [x] Incident creation
 * [ ] Scenario replay foundation
 * [ ] Demo Mode foundation
 * [ ] Custom timeline component
-* [ ] Unit tests
+* [x] Unit tests
 
 ---
 
