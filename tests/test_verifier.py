@@ -1,7 +1,7 @@
 """Unit-test the signature verifier with the real webhook secret from .env"""
 import sys, os, hmac, hashlib
 
-sys.path.insert(0, 'backend')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
 from app.config import settings
 from app.webhook_verifier import verify_razorpay_signature
 

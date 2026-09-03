@@ -1,6 +1,6 @@
 """Integration tests for the webhook endpoint - ASCII safe output."""
 import sys, os, hmac, hashlib, json, time
-sys.path.insert(0, 'backend')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
 import httpx
 from app.config import settings
 
