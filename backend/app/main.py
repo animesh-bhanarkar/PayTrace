@@ -37,9 +37,15 @@ app = FastAPI(
 )
 
 # CORS configuration supporting deployed Vercel and local origins
-allowed_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
-if not allowed_origins:
-    allowed_origins = ["*"]
+raw_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
+if not raw_origins or raw_origins == ["*"]:
+    allowed_origins = [
+        "https://pay-trace-nine.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
+else:
+    allowed_origins = [o for o in raw_origins if o != "*"] or ["https://pay-trace-nine.vercel.app"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -75,6 +81,7 @@ def health():
         "service": "paytrace-backend",
         "database": db_status,
         "webhook_secret_configured": bool(settings.RAZORPAY_WEBHOOK_SECRET),
+        "allowed_origins": allowed_origins,
     }
 
 
