@@ -9,12 +9,19 @@ export default function App() {
   const [backendHealth, setBackendHealth] = useState<string>('checking...')
 
   useEffect(() => {
-    fetch('http://localhost:8000/health')
-      .then((res) => res.json())
+    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
+    fetch(`${apiBaseUrl}/health`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`)
+        }
+        return res.json()
+      })
       .then((data: HealthResponse) => {
         setBackendHealth(`${data.service} (${data.status})`)
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Failed to fetch backend health:', err)
         setBackendHealth('Backend offline / not connected')
       })
   }, [])
