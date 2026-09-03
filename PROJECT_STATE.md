@@ -187,8 +187,7 @@ It must not be used to override the frozen architecture without the required rev
 
 # 5. IN PROGRESS
 
-* [x] Deploy Vercel frontend & configure frontend ↔ backend CORS
-* [x] Razorpay webhook endpoint & signature verification
+None (Day 1 Complete — Ready for Day 2).
 
 ---
 
@@ -206,7 +205,7 @@ None.
 
 # 8. LAST COMPLETED TASK
 
-End-to-end validation of the live webhook path. Genuine Razorpay Test Mode webhooks (IDs 8-13, e.g. `TXSMlZo5GTJshV`) successfully received by Render, signature verified, and persisted to Supabase.
+End-to-end live verification of Vercel frontend deployment (`https://pay-trace-nine.vercel.app`) and Render backend CORS integration. Visually confirmed live in browser: `Status: paytrace-backend (ok)` rendered on screen with zero CORS errors in console. Day 1 is fully complete.
 
 ---
 
@@ -520,8 +519,8 @@ Day 1 goal:
 * [x] TypeScript
 * [x] Tailwind CSS
 * [x] Basic dashboard shell
-* [ ] API configuration
-* [ ] Render API connectivity
+* [x] API configuration (VITE_API_BASE_URL configured with production Render fallback)
+* [x] Render API connectivity (confirmed live on https://pay-trace-nine.vercel.app)
 
 ---
 
@@ -539,12 +538,12 @@ Day 1 goal:
 
 ## Vercel
 
-* [ ] Vercel project configured
-* [ ] Frontend deployed
-* [ ] Public frontend URL confirmed
-* [ ] Render API URL configured
-* [ ] Frontend → backend request confirmed
-* [ ] CORS confirmed
+* [x] Vercel project configured (`pay-trace-nine.vercel.app`)
+* [x] Frontend deployed
+* [x] Public frontend URL confirmed (`https://pay-trace-nine.vercel.app`)
+* [x] Render API URL configured (`https://paytrace-backend-ys0y.onrender.com`)
+* [x] Frontend → backend request confirmed (live browser observed: `Status: paytrace-backend (ok)`)
+* [x] CORS confirmed (explicit origin `https://pay-trace-nine.vercel.app` allowed, preflight passing)
 
 ---
 
@@ -630,6 +629,13 @@ and:
 ```text
 Vercel → Render
 ```
+
+**STATUS: MET END-TO-END**
+Both Day 1 core paths are now genuinely met and verified live:
+1. `Razorpay → Render → Supabase`: Confirmed with real Razorpay Test Mode webhooks (records 8-13), cryptographic signature verification, and PostgreSQL persistence.
+2. `Vercel → Render`: Confirmed live on `https://pay-trace-nine.vercel.app/` connecting to `https://paytrace-backend-ys0y.onrender.com/health`, displaying `Status: paytrace-backend (ok)` with clean console and explicit CORS origin scoping.
+
+**DAY 1 FULL ACCEPTANCE CONDITION IS COMPLETELY MET.**
 
 ---
 
