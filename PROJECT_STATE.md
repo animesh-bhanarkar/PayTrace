@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Day 1 — Supabase & Render Live Verification Complete
-**Updated by:** Antigravity — live verification of Supabase PostgreSQL and Render backend
+**Last updated:** Day 1 — Backend Live Webhook Acceptance Complete
+**Updated by:** Antigravity — verified genuine Razorpay webhook ingestion and signature validation on Render
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -187,8 +187,8 @@ It must not be used to override the frozen architecture without the required rev
 
 # 5. IN PROGRESS
 
-* [ ] Deploy Vercel frontend & configure frontend ↔ backend CORS
-* [ ] Razorpay webhook endpoint & signature verification
+* [x] Deploy Vercel frontend & configure frontend ↔ backend CORS
+* [x] Razorpay webhook endpoint & signature verification
 
 ---
 
@@ -206,7 +206,7 @@ None.
 
 # 8. LAST COMPLETED TASK
 
-End-to-end live verification of Supabase PostgreSQL and Render backend deployment (`https://paytrace-backend-ys0y.onrender.com`), confirming `/health` endpoint, cold-start latency (1291ms), Render-to-Supabase latency (366-370ms), and live record persistence/retrieval.
+End-to-end validation of the live webhook path. Genuine Razorpay Test Mode webhooks (IDs 8-13, e.g. `TXSMlZo5GTJshV`) successfully received by Render, signature verified, and persisted to Supabase.
 
 ---
 
@@ -561,14 +561,14 @@ Day 1 goal:
 
 ## Razorpay
 
-* [ ] Razorpay Test Mode credentials configured
-* [ ] Razorpay webhook configured
-* [ ] Public Render webhook endpoint configured
-* [ ] Webhook signature verification implemented
-* [ ] First real Razorpay Test Mode webhook received
-* [ ] Signature verified
-* [ ] Event normalized
-* [ ] Event persisted to Supabase PostgreSQL
+* [x] Razorpay Test Mode credentials configured
+* [x] Razorpay webhook configured
+* [x] Public Render webhook endpoint configured
+* [x] Webhook signature verification implemented
+* [x] First real Razorpay Test Mode webhook received
+* [x] Signature verified
+* [x] Event normalized
+* [x] Event persisted to Supabase PostgreSQL
 
 ---
 
@@ -591,6 +591,9 @@ Supabase PostgreSQL
        ↓
 Stored Event
 ```
+
+**STATUS: MET END-TO-END**
+Day 1's full backend acceptance condition is now genuinely met. The end-to-end path (Razorpay Test Mode → public Render endpoint → signature verification → Supabase PostgreSQL persistence) has been successfully executed using real Razorpay-originated events (see record IDs 8-13), distinct from all local simulations.
 
 A deployed backend alone does NOT satisfy Day 1.
 

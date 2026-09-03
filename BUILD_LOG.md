@@ -540,4 +540,55 @@ Always verify the exact deployed application version via a health endpoint or co
 
 ---
 
+## 2026-09-03 — Webhook Secret Mismatch on Genuine Events
+
+**Status:** Resolved
+
+### Problem
+
+Initial real payment attempts produced no visible new events in the system, despite Razorpay indicating webhook delivery was successful.
+
+### Observed Behavior
+
+Genuine Razorpay-originated webhooks were being rejected or not logged correctly as verified events, while local simulated webhooks were working perfectly.
+
+### Expected Behavior
+
+Genuine events sent from Razorpay's Test Mode should be received by the public Render endpoint, pass signature verification, and be persisted to Supabase as trusted events.
+
+### Root Cause
+
+The registered Razorpay webhook secret did not match the deployed environment's `RAZORPAY_WEBHOOK_SECRET`. A secret rotation or mismatch caused the deployed environment to reject genuine signatures because they were computed with a different key than the one configured in Render.
+
+### Investigation
+
+Confirmed that local simulated tests passed because they used the local `.env` secret to generate the signature, whereas genuine Razorpay events used the secret configured in the Razorpay dashboard.
+
+### Fix
+
+Rotated the webhook secret and re-synced both Razorpay's dashboard and Render's environment variables to ensure they matched perfectly.
+
+### Test
+
+Made two real Test Mode payments via Razorpay Payment Links and queried the `/webhooks/events` endpoint to verify the results.
+
+### Result
+
+Genuine Razorpay webhook events (e.g., `payment.authorized`, `payment.captured`, `order.paid`) were successfully received, verified (`signature_valid: true`), and persisted to the database. Status: Resolved.
+
+### Engineering Lesson
+
+When webhook integration tests pass locally but fail in production with real external traffic, verify that external secrets match the deployed environment's variables exactly. Simulated tests are inherently blind to external configuration mismatches.
+
+### Related Files / Components
+
+- Render Environment Variables
+- Razorpay Dashboard Webhook Configuration
+
+### Commit
+
+`not yet committed`
+
+---
+
 # END OF BUILD_LOG.md
