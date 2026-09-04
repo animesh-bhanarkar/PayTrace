@@ -61,6 +61,16 @@ class WebhookEvent(Base):
     # Processing notes: rejection reason or verification outcome detail
     processing_notes = Column(Text, nullable=True)
 
+    # Phase 7 — Razorpay & Webhook Diagnostics fields
+    trust_status = Column(String(20), nullable=False, default="UNTRUSTED", index=True)  # TRUSTED | UNTRUSTED | INVALID
+    duplicate_status = Column(String(20), nullable=False, default="ORIGINAL", index=True)  # ORIGINAL | DUPLICATE
+    delivery_delay_seconds = Column(Float, nullable=True)
+    order_id = Column(String(255), nullable=True, index=True)
+    payment_id = Column(String(255), nullable=True, index=True)
+    payload_hash = Column(String(64), nullable=True, index=True)
+    payload_size_bytes = Column(Integer, nullable=True)
+    error_details = Column(JSON, nullable=True)
+
 
 # ---------------------------------------------------------------------------
 # Day 2 — Payment Intelligence Models

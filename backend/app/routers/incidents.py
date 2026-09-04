@@ -7,7 +7,14 @@ import datetime
 import uuid
 
 from app.database import get_db, get_engine, Base
-from app.models import Incident, IncidentNote
+from app.models import Incident, IncidentNote, WebhookEvent, PaymentState, NormalizedEvent
+from sqlalchemy import or_
+from app.webhook_diagnostics import (
+    detect_out_of_order,
+    detect_late_authorization,
+    reconcile_states,
+    sanitize_webhook_payload,
+)
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 
@@ -566,3 +573,90 @@ def add_incident_note(
         note_text=note.note_text,
         created_at=note.created_at.isoformat() if isinstance(note.created_at, datetime.datetime) else None,
     )
+
+
+@router.get("/{id_or_payment_id}/webhooks")
+def get_incident_webhooks(
+    id_or_payment_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Get all correlated webhook delivery observations, diagnostics, and reconciliation for an incident.
+    """
+    # 1. Resolve incident by id or payment_id
+    incident = None
+    is_valid_uuid = False
+    try:
+        uuid.UUID(str(id_or_payment_id))
+        is_valid_uuid = True
+    except (ValueError, AttributeError):
+        is_valid_uuid = False
+
+    if is_valid_uuid:
+        incident = db.query(Incident).filter(Incident.id == id_or_payment_id).first()
+    if not incident:
+        incident = db.query(Incident).filter(Incident.payment_id == id_or_payment_id).first()
+
+    payment_id = incident.payment_id if incident else id_or_payment_id
+    order_id = incident.order_id if incident else None
+
+    # 2. Correlate webhooks
+    wh_query = db.query(WebhookEvent)
+    filter_clauses = []
+    if payment_id:
+        filter_clauses.extend([WebhookEvent.payment_id == payment_id, WebhookEvent.entity_id == payment_id])
+    if order_id:
+        filter_clauses.append(WebhookEvent.order_id == order_id)
+
+    if filter_clauses:
+        wh_events = wh_query.filter(or_(*filter_clauses)).order_by(WebhookEvent.id.asc()).all()
+    else:
+        wh_events = []
+
+    # Diagnostics
+    trusted_events = [w for w in wh_events if w.signature_valid]
+    out_of_order_diag = detect_out_of_order(trusted_events)
+    late_auth_diag = detect_late_authorization(trusted_events)
+
+    # Reconciliation
+    auth_row = db.query(PaymentState).filter(PaymentState.payment_id == payment_id).first() if payment_id else None
+    auth_state = auth_row.current_state if auth_row else None
+
+    merchant_row = (
+        db.query(NormalizedEvent)
+        .filter(NormalizedEvent.payment_id == payment_id, NormalizedEvent.source == "merchant")
+        .first()
+        if payment_id else None
+    )
+    merchant_state = merchant_row.status if merchant_row else None
+
+    reconciliation = reconcile_states(auth_state, trusted_events, merchant_state)
+
+    return {
+        "payment_id": payment_id,
+        "order_id": order_id,
+        "correlated_webhooks_count": len(wh_events),
+        "trusted_webhooks_count": len(trusted_events),
+        "out_of_order_diagnostics": out_of_order_diag,
+        "late_authorization_diagnostics": late_auth_diag,
+        "reconciliation": reconciliation,
+        "webhooks": [
+            {
+                "id": w.id,
+                "razorpay_event_id": w.razorpay_event_id,
+                "trust_status": w.trust_status or ("TRUSTED" if w.signature_valid else "UNTRUSTED"),
+                "duplicate_status": w.duplicate_status or "ORIGINAL",
+                "signature_valid": w.signature_valid,
+                "event_type": w.event_type,
+                "payment_id": w.payment_id or w.entity_id,
+                "order_id": w.order_id,
+                "event_timestamp": w.event_timestamp.isoformat() if w.event_timestamp else None,
+                "ingestion_timestamp": w.ingestion_timestamp.isoformat() if w.ingestion_timestamp else None,
+                "delivery_delay_seconds": w.delivery_delay_seconds,
+                "error_details": w.error_details,
+                "raw_payload": sanitize_webhook_payload(w.raw_payload),
+                "processing_notes": w.processing_notes,
+            }
+            for w in wh_events
+        ],
+    }

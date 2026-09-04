@@ -88,15 +88,53 @@ def verify_claims(
         # 4. If counter_evidence_ids present: none of them must contradict current_state in reconstructed_state
         #    → mark as noted but do not auto-reject
         # (Instruction says "mark as noted but do not auto-reject", so we do nothing to reject it)
-        
-        # 5. All checks pass → SUPPORTED
+
+        # 5. Phase 7 Deterministic Webhook Claims Verification
+        stmt_lower = statement.lower()
+        cited_events = [ev for ev in package_events if ev.get("evidence_id") in evidence_ids]
+
+        # Check signature verification claims
+        if ("signature" in stmt_lower and ("invalid" in stmt_lower or "failed" in stmt_lower or "mismatch" in stmt_lower)):
+            # If all cited events actually have valid signatures, reject the claim!
+            if cited_events and all(ev.get("signature_valid") is True for ev in cited_events):
+                verified_claims.append(VerifiedClaim(
+                    claim_id=claim_id,
+                    statement=statement,
+                    verdict="REJECTED",
+                    rejection_reason="Claim of invalid signature contradicted by evidence: cited events have valid signatures",
+                    evidence_ids=evidence_ids,
+                    confidence=confidence,
+                ))
+                continue
+
+        # Check duplicate delivery claims
+        if ("duplicate" in stmt_lower or "delivered twice" in stmt_lower or "multiple times" in stmt_lower):
+            # Must have duplicate evidence in package
+            duplicate_found = False
+            for ev in cited_events:
+                if ev.get("duplicate_status") == "DUPLICATE" or ev.get("delivery_status") == "duplicate":
+                    duplicate_found = True
+                    break
+            # Or multiple events sharing same event_id / payload_hash
+            if not duplicate_found and len(cited_events) < 2:
+                verified_claims.append(VerifiedClaim(
+                    claim_id=claim_id,
+                    statement=statement,
+                    verdict="REJECTED",
+                    rejection_reason="Claim of duplicate delivery not supported by evidence package",
+                    evidence_ids=evidence_ids,
+                    confidence=confidence,
+                ))
+                continue
+
+        # 6. All checks pass → SUPPORTED
         verified_claims.append(VerifiedClaim(
             claim_id=claim_id,
             statement=statement,
             verdict="SUPPORTED",
             rejection_reason=None,
             evidence_ids=evidence_ids,
-            confidence=confidence
+            confidence=confidence,
         ))
         
     return verified_claims

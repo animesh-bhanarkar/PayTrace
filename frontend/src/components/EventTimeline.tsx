@@ -180,11 +180,27 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ events, incidents 
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 sm:text-right shrink-0">
-                  <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                    {timestamp}
-                  </span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">
+                <div className="flex flex-col sm:items-end gap-1 shrink-0 text-xs font-mono">
+                  {String(evt.source || "").toLowerCase() === "merchant" ? (
+                    <div className="text-zinc-600 dark:text-zinc-300">
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 mr-1.5">MERCHANT PROCESSING TIME:</span>
+                      <span>{timestamp}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-zinc-700 dark:text-zinc-300">
+                        <span className="text-[10px] uppercase font-bold text-zinc-400 mr-1.5">EVENT TIME:</span>
+                        <span>{timestamp}</span>
+                      </div>
+                      {evt.ingestion_timestamp && (
+                        <div className="text-zinc-500 dark:text-zinc-400 text-[11px]">
+                          <span className="text-[10px] uppercase font-semibold text-zinc-400 mr-1.5">INGESTION TIME:</span>
+                          <span>{formatTimestamp(evt.ingestion_timestamp)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <span className="self-start sm:self-end px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">
                     {sourceLabel}
                   </span>
                 </div>

@@ -24,6 +24,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
   const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
   const [severityFilter, setSeverityFilter] = useState<string>("ALL");
   const [tagFilter, setTagFilter] = useState<string>("ALL");
+  const [webhookOnly, setWebhookOnly] = useState<boolean>(false);
   const [tabMode, setTabMode] = useState<"database" | "scenarios">("database");
 
   // Collect all unique tags across all incidents for filter dropdown
@@ -59,8 +60,23 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
     const matchesPriority = priorityFilter === "ALL" || priority === priorityFilter;
     const matchesSeverity = severityFilter === "ALL" || techSeverity === severityFilter;
     const matchesTag = tagFilter === "ALL" || tags.includes(tagFilter.toLowerCase());
+    const matchesWebhook =
+      !webhookOnly ||
+      inc.incident_type.toLowerCase().includes("webhook") ||
+      inc.description.toLowerCase().includes("webhook") ||
+      inc.incident_type === "out_of_order" ||
+      inc.incident_type === "delayed_webhook" ||
+      inc.incident_type === "duplicate_webhook" ||
+      inc.incident_type === "signature_verification_failure";
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesSeverity && matchesTag;
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesPriority &&
+      matchesSeverity &&
+      matchesTag &&
+      matchesWebhook
+    );
   });
 
   // Filter scenarios
@@ -335,6 +351,22 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Webhook Only Toggle */}
+            <div className="sm:col-span-12 flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setWebhookOnly(!webhookOnly)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer border ${
+                  webhookOnly
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400"
+                }`}
+              >
+                <span>⚡ Webhook Anomalies Only</span>
+                {webhookOnly && <span className="text-[10px] font-mono">ACTIVE</span>}
+              </button>
             </div>
           </div>
         )}

@@ -422,5 +422,74 @@ export async function fetchIncidentHistory(
   return res.json();
 }
 
+// --- PHASE 7: WEBHOOK DIAGNOSTICS API METHODS ---
+
+export async function fetchWebhooks(params?: {
+  limit?: number;
+  trust_status?: string;
+  duplicate_status?: string;
+  event_type?: string;
+  payment_id?: string;
+}): Promise<{ count: number; webhooks: import("../types").WebhookEventItem[] }> {
+  const q = new URLSearchParams();
+  if (params?.limit) q.append("limit", params.limit.toString());
+  if (params?.trust_status) q.append("trust_status", params.trust_status);
+  if (params?.duplicate_status) q.append("duplicate_status", params.duplicate_status);
+  if (params?.event_type) q.append("event_type", params.event_type);
+  if (params?.payment_id) q.append("payment_id", params.payment_id);
+
+  const res = await fetch(`${BASE_URL}/webhooks?${q.toString()}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchWebhookDetail(id: number): Promise<import("../types").WebhookEventItem> {
+  const res = await fetch(`${BASE_URL}/webhooks/${id}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchWebhookDiagnostics(id: number): Promise<Record<string, unknown>> {
+  const res = await fetch(`${BASE_URL}/webhooks/${id}/diagnostics`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchIncidentWebhooks(
+  paymentIdOrId: string
+): Promise<import("../types").IncidentWebhooksResponse> {
+  const res = await fetch(`${BASE_URL}/incidents/${encodeURIComponent(paymentIdOrId)}/webhooks`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchWebhookReconciliation(
+  paymentId: string
+): Promise<{
+  payment_id: string;
+  reconciliation: import("../types").ReconciliationResult;
+  trusted_webhook_count: number;
+  merchant_belief_recorded: boolean;
+}> {
+  const res = await fetch(`${BASE_URL}/webhooks/reconciliation/${encodeURIComponent(paymentId)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 
 

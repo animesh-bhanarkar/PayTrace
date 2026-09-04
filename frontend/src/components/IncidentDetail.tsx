@@ -14,6 +14,7 @@ import { EvidenceClaimGraph } from "./EvidenceClaimGraph";
 import { InvestigationReportModal } from "./InvestigationReportModal";
 import { MissingEvidenceCard } from "./MissingEvidenceCard";
 import { SimilarIncidentsCard } from "./SimilarIncidentsCard";
+import { WebhookDiagnosticsCard } from "./WebhookDiagnosticsCard";
 import {
   resolveIncident,
   reopenIncident,
@@ -44,6 +45,7 @@ import {
   Play,
   AlertTriangle,
   ArrowRight,
+  Radio,
 } from "lucide-react";
 
 interface IncidentDetailProps {
@@ -121,7 +123,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
 
   // View tabs
-  const [activeViewTab, setActiveViewTab] = useState<"overview" | "history" | "graph" | "timeline">("overview");
+  const [activeViewTab, setActiveViewTab] = useState<"overview" | "webhooks" | "history" | "graph" | "timeline">("overview");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -682,6 +684,18 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveViewTab("webhooks")}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+            activeViewTab === "webhooks"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <Radio className="w-4 h-4" />
+          <span>Webhook Diagnostics</span>
+        </button>
+
+        <button
           onClick={() => setActiveViewTab("history")}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
             activeViewTab === "history"
@@ -804,9 +818,18 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
         </div>
       )}
 
+      {/* ── View: Webhook Diagnostics Tab ──────────────────────────────────── */}
+      {activeViewTab === "webhooks" && (
+        <WebhookDiagnosticsCard paymentId={paymentId} onSelectEvent={onSelectEvidence} />
+      )}
+
       {/* ── View: Main Overview Dual-Column Layout ───────────────────────────── */}
       {activeViewTab === "overview" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="space-y-6">
+          {/* Phase 7: Razorpay Webhook Diagnostics Card */}
+          <WebhookDiagnosticsCard paymentId={paymentId} onSelectEvent={onSelectEvidence} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
             {/* Section 1: AI Investigation Transparency & Claims Card */}
@@ -1032,6 +1055,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
               onSelectPayment={onSelectPayment}
             />
           </div>
+        </div>
         </div>
       )}
 

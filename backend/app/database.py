@@ -26,6 +26,14 @@ def upgrade_schema(engine):
             "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;",
             "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS assignee VARCHAR(255);",
             "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS workflow_history JSONB DEFAULT '[]'::jsonb;",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS trust_status VARCHAR(20) NOT NULL DEFAULT 'UNTRUSTED';",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS duplicate_status VARCHAR(20) NOT NULL DEFAULT 'ORIGINAL';",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS delivery_delay_seconds DOUBLE PRECISION;",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS order_id VARCHAR(255);",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS payment_id VARCHAR(255);",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS payload_hash VARCHAR(64);",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS payload_size_bytes INTEGER;",
+            "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS error_details JSONB;",
         ]
         try:
             with engine.connect() as conn:
@@ -51,7 +59,26 @@ def upgrade_schema(engine):
                         conn.execute(text("ALTER TABLE incidents ADD COLUMN assignee VARCHAR(255);"))
                     if "workflow_history" not in cols:
                         conn.execute(text("ALTER TABLE incidents ADD COLUMN workflow_history JSON DEFAULT '[]';"))
-                    conn.commit()
+
+                wh_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(webhook_events);")).fetchall()]
+                if wh_cols:
+                    if "trust_status" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN trust_status VARCHAR(20) DEFAULT 'UNTRUSTED';"))
+                    if "duplicate_status" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN duplicate_status VARCHAR(20) DEFAULT 'ORIGINAL';"))
+                    if "delivery_delay_seconds" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN delivery_delay_seconds FLOAT;"))
+                    if "order_id" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN order_id VARCHAR(255);"))
+                    if "payment_id" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN payment_id VARCHAR(255);"))
+                    if "payload_hash" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN payload_hash VARCHAR(64);"))
+                    if "payload_size_bytes" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN payload_size_bytes INTEGER;"))
+                    if "error_details" not in wh_cols:
+                        conn.execute(text("ALTER TABLE webhook_events ADD COLUMN error_details JSON;"))
+                conn.commit()
         except Exception:
             pass
 

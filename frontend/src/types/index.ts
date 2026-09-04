@@ -403,4 +403,87 @@ export interface AssigneeUpdatePayload {
   actor?: string;
 }
 
+// --- PHASE 7: RAZORPAY & WEBHOOK DIAGNOSTICS TYPES ---
+
+export type WebhookTrustStatus = "TRUSTED" | "UNTRUSTED" | "INVALID";
+
+export type DuplicateStatus = "ORIGINAL" | "DUPLICATE";
+
+export type ReconciliationStatus =
+  | "CONSISTENT"
+  | "WEBHOOK_DELAYED"
+  | "MERCHANT_NOT_UPDATED"
+  | "CONFLICTING_OBSERVATIONS"
+  | "INSUFFICIENT_EVIDENCE";
+
+export interface WebhookErrorDetails {
+  has_error: boolean;
+  code: string;
+  description: string;
+  source: string;
+  step: string;
+  reason: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface WebhookDeliveryDelay {
+  delay_seconds: number | null;
+  classification: "LOW" | "NORMAL" | "DELAYED" | "SIGNIFICANTLY_DELAYED" | "UNAVAILABLE";
+  label: string;
+  event_timestamp: string | null;
+  ingestion_timestamp: string | null;
+}
+
+export interface ReconciliationResult {
+  status: ReconciliationStatus;
+  razorpay_state: string;
+  webhook_state: string;
+  merchant_state: string;
+  explanation: string;
+}
+
+export interface WebhookEventItem {
+  id: number;
+  razorpay_event_id: string | null;
+  trust_status: WebhookTrustStatus;
+  duplicate_status: DuplicateStatus;
+  signature_valid: boolean;
+  event_type: string | null;
+  payment_id: string | null;
+  order_id: string | null;
+  event_timestamp: string | null;
+  ingestion_timestamp: string | null;
+  delivery_delay_seconds: number | null;
+  payload_size_bytes: number | null;
+  payload_hash: string | null;
+  has_error: boolean;
+  error_details: WebhookErrorDetails | null;
+  raw_payload?: Record<string, unknown> | null;
+  processing_notes: string | null;
+}
+
+export interface IncidentWebhooksResponse {
+  payment_id: string | null;
+  order_id: string | null;
+  correlated_webhooks_count: number;
+  trusted_webhooks_count: number;
+  out_of_order_diagnostics: {
+    detected: boolean;
+    description: string;
+    pairs?: Array<{
+      earlier_received: { id: string; event_type: string; event_timestamp: string; ingestion_timestamp: string };
+      later_received: { id: string; event_type: string; event_timestamp: string; ingestion_timestamp: string };
+    }>;
+  };
+  late_authorization_diagnostics: {
+    detected: boolean;
+    pattern: string | null;
+    description: string;
+    failed_event_id?: string;
+    captured_event_id?: string;
+  };
+  reconciliation: ReconciliationResult;
+  webhooks: WebhookEventItem[];
+}
+
 
