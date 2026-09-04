@@ -1,5 +1,6 @@
 import sys
 import os
+from unittest.mock import patch
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
@@ -23,10 +24,26 @@ def test_scenario_01_clean_capture():
 
 def test_scenario_02_ai_activated():
     """Scenario 02: Missing payment.created triggers invalid transition and AI investigation."""
-    response = client.post("/scenarios/replay", json={"scenario_id": "scenario_02"})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["actual"]["ai_activated"] is True
+    mock_investigation = {
+        "hypothesis": "Payment authorized without prior payment.created event.",
+        "claims": [
+            {
+                "claim_id": "C1",
+                "statement": "Payment authorized directly from unknown state.",
+                "evidence_ids": ["evt_s02_001"],
+                "counter_evidence_ids": [],
+                "confidence": "HIGH",
+            }
+        ],
+        "recommended_next_step": "Investigate upstream webhook delivery.",
+        "uncertainty": "LOW",
+    }
+    with patch("app.routers.scenarios.investigate", return_value=mock_investigation):
+        response = client.post("/scenarios/replay", json={"scenario_id": "scenario_02"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["actual"]["ai_activated"] is True
+        assert data["passed"] is True
 
 
 def test_scenario_03_duplicate_webhook():
