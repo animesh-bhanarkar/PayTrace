@@ -15,6 +15,7 @@ from app.webhook_diagnostics import (
     reconcile_states,
     sanitize_webhook_payload,
 )
+from app.live_monitoring import live_event_stream
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 
@@ -125,6 +126,28 @@ def _record_workflow_event(
     }
     history.insert(0, entry)
     incident.workflow_history = history
+
+    # Broadcast live event for incident update
+    try:
+        live_event_stream.publish_event(
+            "incident.updated",
+            {
+                "incident_id": str(incident.id),
+                "payment_id": incident.payment_id,
+                "order_id": incident.order_id,
+                "action": action,
+                "field": field,
+                "old_value": old_val,
+                "new_value": new_val,
+                "operational_status": incident.operational_status or ("RESOLVED" if incident.resolved else "OPEN"),
+                "priority": incident.priority or "MEDIUM",
+                "actor": entry["actor"],
+                "notes": notes,
+            },
+        )
+    except Exception as e:
+        pass
+
     return entry
 
 

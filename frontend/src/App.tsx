@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
+import { LiveMonitoringProvider } from "./context/LiveMonitoringContext";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { IncidentsExplorer } from "./components/IncidentsExplorer";
@@ -30,7 +31,9 @@ import type {
 export default function App() {
   return (
     <ThemeProvider>
-      <PayTraceApp />
+      <LiveMonitoringProvider>
+        <PayTraceApp />
+      </LiveMonitoringProvider>
     </ThemeProvider>
   );
 }
@@ -79,6 +82,18 @@ function PayTraceApp() {
     }
     loadInitialData();
   }, []);
+
+  const refreshIncidents = async () => {
+    setLoadingData(true);
+    try {
+      const incidents = await fetchIncidents(50);
+      setIncidentsList(incidents);
+    } catch (err) {
+      console.warn("Failed to refresh incidents:", err);
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   // Handle selecting an incident to view full detail
   const handleSelectIncident = async (paymentId: string, meta?: Record<string, unknown>) => {
@@ -277,6 +292,7 @@ function PayTraceApp() {
               onBack={handleBackToIncidents}
               onSelectEvidence={(eid) => setSelectedEvidenceId(eid)}
               onSelectPayment={(pid) => handleSelectIncident(pid)}
+              onReload={() => handleSelectIncident(selectedPaymentId, selectedIncidentMeta || undefined)}
             />
           ) : selectedPaymentId && investigating ? (
             <div className="py-24 text-center space-y-3">
@@ -305,6 +321,7 @@ function PayTraceApp() {
               onReplayScenario={handleReplayScenario}
               loadingScenarioId={activeLoadingScenario}
               loading={loadingData}
+              onRefresh={refreshIncidents}
             />
           ) : activeTab === "patterns" ? (
             /* VIEW: Pattern Explorer */

@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import type { IncidentRecord, ScenarioFixtureItem } from "../types";
-import { AlertTriangle, Clock, User, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertTriangle, Clock, User, ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { useLiveMonitoring } from "../context/LiveMonitoringContext";
 
 interface IncidentsExplorerProps {
   incidents: IncidentRecord[];
@@ -9,6 +10,7 @@ interface IncidentsExplorerProps {
   onReplayScenario: (scenarioId: string) => void;
   loadingScenarioId: string | null;
   loading: boolean;
+  onRefresh?: () => void;
 }
 
 export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
@@ -18,7 +20,27 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
   onReplayScenario,
   loadingScenarioId,
   loading,
+  onRefresh,
 }) => {
+  const { subscribeToEvents } = useLiveMonitoring();
+  const [newEventsAlert, setNewEventsAlert] = useState<{ count: number; latestType: string } | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToEvents((event) => {
+      if (
+        event.event_type === "incident.created" ||
+        event.event_type === "incident.updated" ||
+        event.event_type === "webhook.received"
+      ) {
+        setNewEventsAlert((prev) => ({
+          count: (prev?.count || 0) + 1,
+          latestType: event.event_type,
+        }));
+      }
+    });
+    return unsubscribe;
+  }, [subscribeToEvents]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
@@ -172,6 +194,40 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* ── Live Ingestion Event Alert Banner ─────────────────────────────────────────── */}
+      {newEventsAlert && (
+        <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-800/80 rounded-xl flex items-center justify-between shadow-2xs transition-all">
+          <div className="flex items-center gap-2.5 text-xs text-blue-900 dark:text-blue-200">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping"></span>
+            <span className="font-bold">Live Event Received:</span>
+            <span>
+              {newEventsAlert.count} new update{newEventsAlert.count > 1 ? "s" : ""} detected ({newEventsAlert.latestType}).
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setNewEventsAlert(null);
+                onRefresh?.();
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition cursor-pointer"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Refresh Table
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewEventsAlert(null)}
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              title="Dismiss notification"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Real Database Operational KPI Bar ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 transition-colors">

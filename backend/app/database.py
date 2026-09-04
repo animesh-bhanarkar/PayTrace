@@ -134,8 +134,13 @@ def get_session_local():
     return _SessionLocal
 
 
+def SessionLocal() -> Session:
+    """Convenience factory returning a new database session."""
+    factory = get_session_local()
+    return factory()
+
+
 def get_db() -> Generator[Session, None, None]:
-    SessionLocal = get_session_local()
     db = SessionLocal()
     try:
         yield db

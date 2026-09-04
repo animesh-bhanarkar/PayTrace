@@ -534,3 +534,35 @@ export async function fetchAdvancedInvestigationHistory(
   }
   return res.json();
 }
+
+// ── Phase 9: Live Monitoring API ───────────────────────────────────────────────
+
+export interface LiveEventItem {
+  id: number;
+  event_type: string;
+  data: Record<string, any>;
+  timestamp: string;
+}
+
+export function getLiveEventsUrl(cursor?: number): string {
+  const url = `${BASE_URL}/live/events`;
+  return cursor ? `${url}?cursor=${cursor}` : url;
+}
+
+export async function fetchLiveStatus(): Promise<any> {
+  const res = await fetch(`${BASE_URL}/live/status`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchRecentLiveEvents(
+  cursor?: number,
+  limit = 20
+): Promise<{ count: number; current_cursor: number; events: LiveEventItem[] }> {
+  const q = new URLSearchParams();
+  if (cursor !== undefined) q.set("cursor", String(cursor));
+  q.set("limit", String(limit));
+  const res = await fetch(`${BASE_URL}/live/recent?${q.toString()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}

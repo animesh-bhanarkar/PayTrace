@@ -1168,7 +1168,35 @@ The previous production SQLite decision has been superseded by Supabase PostgreS
 
 ---
 
-# 16. FINAL PRINCIPLE
+---
+
+# 17. PHASE 9 — LIVE MONITORING AND MCP INTEGRATION (2026-09-05)
+
+### Decision 17.1: Live Monitoring Architecture — Server-Sent Events (SSE) + Polling Fallback
+- **Choice:** Standard SSE (`GET /live/events`) with a process-local bounded replay buffer (1,000 events) and monotonic cursor sequence, plus REST polling fallback (`GET /live/recent`).
+- **Rationale:** PayTrace remains a single-process/lightweight service without external pub/sub dependencies (no Kafka, Redis, RabbitMQ, Celery).
+- **Core Invariant:** `LIVE != AUTONOMOUS`. Live monitoring is an observation and notification layer only. It never triggers automated financial mutations.
+- **Data Protection:** Metadata sanitization strips PAN, CVV, passwords, api_keys, and authorization tokens prior to broadcast.
+
+### Decision 17.2: Controlled Model Context Protocol (MCP) Server
+- **Choice:** Standard JSON-RPC 2.0 MCP interface exposed over both HTTP (`POST /mcp`, `GET /mcp`) and local STDIO (`python -m app.mcp_stdio`).
+- **Hard Security Boundary:** Strict mutation safety enforcement. Absolutely zero money-moving operations (no capture, refund, transfer, checkout modification) or arbitrary SQL/shell/filesystem execution.
+- **Exposed Tools (9 Approved Diagnostic Tools):**
+  1. `get_incident`
+  2. `get_incident_evidence`
+  3. `get_webhook_diagnostics`
+  4. `get_investigation`
+  5. `get_investigation_history`
+  6. `search_incidents`
+  7. `get_similar_incidents`
+  8. `get_patterns`
+  9. `run_advanced_investigation` (non-mutating)
+- **Prompt Injection Defense:** External text from webhook bodies, merchant notes, and errors is strictly demarcated as untrusted DATA, preventing instruction hijacking.
+- **Payment Authority Preservation:** Razorpay API state remains authoritative over merchant belief (`Razorpay > Merchant`). AI investigates discrepancy causality, never dictates payment truth.
+
+---
+
+# 18. FINAL PRINCIPLE
 
 Decisions should make the project easier to build, easier to reason about, and harder to accidentally derail.
 
@@ -1183,3 +1211,4 @@ When implementation reveals a genuine problem:
 ---
 
 # END OF DECISIONS.md
+

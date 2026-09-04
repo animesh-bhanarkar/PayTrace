@@ -37,6 +37,7 @@ from app.webhook_diagnostics import (
     reconcile_states,
     sanitize_webhook_payload,
 )
+from app.live_monitoring import live_event_stream
 
 logger = logging.getLogger("paytrace.webhooks")
 
@@ -234,10 +235,34 @@ async def receive_razorpay_webhook(
             x_razorpay_event_id,
             event_type,
         )
+        live_event_stream.publish_event(
+            "webhook.untrusted",
+            {
+                "event_id": x_razorpay_event_id,
+                "event_type": event_type,
+                "payment_id": payment_id,
+                "trust_status": "UNTRUSTED",
+                "processing_notes": "Untrusted webhook rejected: signature verification failed",
+            },
+        )
         raise HTTPException(
             status_code=403,
             detail="Webhook signature verification failed. Event rejected.",
         )
+
+    # Publish trusted webhook receipt observation
+    live_event_stream.publish_event(
+        "webhook.received",
+        {
+            "event_id": x_razorpay_event_id,
+            "event_type": event_type,
+            "payment_id": payment_id,
+            "order_id": order_id,
+            "trust_status": "TRUSTED",
+            "duplicate_status": duplicate_status,
+            "delivery_delay_seconds": delivery_delay_seconds,
+        },
+    )
 
     if duplicate_status == "DUPLICATE":
         logger.info(
@@ -318,6 +343,20 @@ async def receive_razorpay_webhook(
             db.add(incident_row)
 
         db.commit()
+
+        # Broadcast incident.created live events
+        for inc in incidents:
+            live_event_stream.publish_event(
+                "incident.created",
+                {
+                    "incident_type": inc.incident_type,
+                    "payment_id": inc.payment_id,
+                    "order_id": inc.order_id,
+                    "severity": inc.severity,
+                    "operational_status": "OPEN",
+                    "description": inc.description,
+                },
+            )
     except Exception as e:
         db.rollback()
         logger.error("Event Normalization Pipeline failed: %s", e)

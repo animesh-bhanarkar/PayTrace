@@ -50,6 +50,7 @@ import {
   BrainCircuit,
   Sparkles,
 } from "lucide-react";
+import { useLiveMonitoring } from "../context/LiveMonitoringContext";
 
 interface IncidentDetailProps {
   investigationResult: InvestigationResult;
@@ -69,6 +70,7 @@ interface IncidentDetailProps {
   onBack: () => void;
   onSelectEvidence?: (evidenceId: string) => void;
   onSelectPayment?: (paymentId: string) => void;
+  onReload?: () => void;
 }
 
 export const IncidentDetail: React.FC<IncidentDetailProps> = ({
@@ -77,8 +79,30 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
   onBack,
   onSelectEvidence,
   onSelectPayment,
+  onReload,
 }) => {
+  const { subscribeToEvents } = useLiveMonitoring();
+  const [liveUpdateAlert, setLiveUpdateAlert] = useState<string | null>(null);
+
   const paymentId = investigationResult.payment_id;
+
+  useEffect(() => {
+    const unsubscribe = subscribeToEvents((event) => {
+      const eventPid = event.data?.payment_id;
+      const eventIncId = String(event.data?.incident_id || "");
+      const currentIncId = String(incidentMeta?.id || "");
+
+      if (
+        (eventPid && eventPid === paymentId) ||
+        (eventIncId && currentIncId && eventIncId === currentIncId)
+      ) {
+        setLiveUpdateAlert(
+          `Live update received (${event.event_type}) for this payment/incident.`
+        );
+      }
+    });
+    return unsubscribe;
+  }, [subscribeToEvents, paymentId, incidentMeta?.id]);
   const orderId =
     incidentMeta?.order_id ||
     (typeof investigationResult.authoritative_result?.order_id === "string"
@@ -381,6 +405,37 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
           >
             <X className="w-3.5 h-3.5" />
           </button>
+        </div>
+      )}
+
+      {/* ── Live Activity Notification Banner ────────────────────────────── */}
+      {liveUpdateAlert && (
+        <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center justify-between text-xs text-blue-900 dark:text-blue-200 shadow-2xs animate-in fade-in transition-all">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping"></span>
+            <span className="font-semibold">Live Incident Activity:</span>
+            <span>{liveUpdateAlert}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setLiveUpdateAlert(null);
+                onReload?.();
+              }}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition cursor-pointer"
+            >
+              Reload Incident
+            </button>
+            <button
+              type="button"
+              onClick={() => setLiveUpdateAlert(null)}
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 

@@ -24,6 +24,7 @@ from app.claim_verifier import (
 from app.confidence_engine import compute_confidence, compute_advanced_confidence
 from app.audit_trail import build_audit_entry
 from app.missing_evidence_engine import evaluate_missing_evidence
+from app.live_monitoring import live_event_stream
 
 logger = logging.getLogger("paytrace.investigations")
 
@@ -117,6 +118,23 @@ def run_investigation(request: InvestigateRequest, db: Session = Depends(get_db)
         db.add(audit_record)
         db.commit()
 
+        try:
+            live_event_stream.publish_event(
+                "investigation.completed",
+                {
+                    "payment_id": payment_id,
+                    "investigation_type": "standard",
+                    "ai_activated": False,
+                    "reason": reason,
+                    "confidence_score": confidence.get("score") if isinstance(confidence, dict) else None,
+                    "confidence_level": confidence.get("level") if isinstance(confidence, dict) else None,
+                    "abstained": confidence.get("abstain", False) if isinstance(confidence, dict) else False,
+                    "verdict": authoritative_result.get("verdict") if isinstance(authoritative_result, dict) else None,
+                },
+            )
+        except Exception:
+            pass
+
         return {
             "payment_id": payment_id,
             "ai_activated": False,
@@ -195,6 +213,24 @@ def run_investigation(request: InvestigateRequest, db: Session = Depends(get_db)
     all_verified_dicts = [asdict(vc) for vc in verified_claims_list]
     supported_and_unverifiable = [d for d in all_verified_dicts if d["verdict"] != "REJECTED"]
     rejected_dicts = [d for d in all_verified_dicts if d["verdict"] == "REJECTED"]
+
+    try:
+        live_event_stream.publish_event(
+            "investigation.completed",
+            {
+                "payment_id": payment_id,
+                "investigation_type": "standard",
+                "ai_activated": True,
+                "reason": reason,
+                "confidence_score": confidence.get("score") if isinstance(confidence, dict) else None,
+                "confidence_level": confidence.get("level") if isinstance(confidence, dict) else None,
+                "abstained": confidence.get("abstain", False) if isinstance(confidence, dict) else False,
+                "verdict": authoritative_result.get("verdict") if isinstance(authoritative_result, dict) else None,
+                "supported_claims_count": len(supported_and_unverifiable),
+            },
+        )
+    except Exception:
+        pass
 
     return {
         "payment_id": payment_id,
@@ -684,6 +720,25 @@ def run_advanced_investigation(incident_id: str, db: Session = Depends(get_db)):
         db.add(audit_record)
         db.commit()
 
+        try:
+            live_event_stream.publish_event(
+                "investigation.completed",
+                {
+                    "incident_id": str(incident_row.id),
+                    "payment_id": payment_id,
+                    "investigation_type": "advanced",
+                    "ai_activated": False,
+                    "activation_reason": activation_reason,
+                    "outcome": confidence_result.get("outcome"),
+                    "confidence_score": confidence_result.get("overall_confidence"),
+                    "confidence_level": confidence_result.get("confidence_level"),
+                    "abstained": confidence_result.get("abstain", False),
+                    "verdict": authoritative_result.get("verdict"),
+                },
+            )
+        except Exception:
+            pass
+
         return {
             "incident_id": str(incident_row.id),
             "payment_id": payment_id,
@@ -844,6 +899,26 @@ def run_advanced_investigation(incident_id: str, db: Session = Depends(get_db)):
     )
     db.add(audit_record)
     db.commit()
+
+    try:
+        live_event_stream.publish_event(
+            "investigation.completed",
+            {
+                "incident_id": str(incident_row.id),
+                "payment_id": payment_id,
+                "investigation_type": "advanced",
+                "ai_activated": True,
+                "activation_reason": activation_reason,
+                "outcome": confidence_result.get("outcome"),
+                "confidence_score": confidence_result.get("overall_confidence"),
+                "confidence_level": confidence_result.get("confidence_level"),
+                "abstained": confidence_result.get("abstain", False),
+                "verdict": authoritative_result.get("verdict"),
+                "hypotheses_count": len(hyp_verifications),
+            },
+        )
+    except Exception:
+        pass
 
     # 16. Build response
     return {

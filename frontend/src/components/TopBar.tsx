@@ -1,5 +1,6 @@
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
+import { LiveStatusIndicator } from "./LiveStatusIndicator";
 
 interface TopBarProps {
   onBackToIncidents?: () => void;
@@ -48,6 +49,9 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Live SSE Connection Indicator */}
+        <LiveStatusIndicator />
+
         {/* Environment Badge */}
         <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
