@@ -156,24 +156,53 @@ During implementation, genuine engineering obstacles were encountered, investiga
 
 ---
 
-## Controlled Benchmark Results
+## Controlled Benchmark — Deterministic Pipeline Validation
 
-> **These are in-process benchmark results, not production measurements.** All three modes run via FastAPI `TestClient` in memory. No live Gemini API calls are made; the LLM response is stubbed with a fixed HIGH-confidence claim so the comparison is structurally valid. Latency figures are indicative in-process timings only. See [`scripts/run_benchmark.py`](scripts/run_benchmark.py) to reproduce.
+> **⚠️ IMPORTANT: The LLM (Gemini) is STUBBED in all default benchmark modes. Results below measure deterministic pipeline behaviour, NOT real Gemini AI accuracy.**
+>
+> Real Gemini evaluation is available with `python scripts/run_benchmark.py --real-gemini` and has not been run in the results below.
 
-**Corpus:** 15 scenarios across 8 distinct anomaly categories.  
+**What is measured:** State machine correctness, incident detection, AI activation gate routing, claim verification (rejection of bad claims), confidence calibration, and abstention logic.
+
+**What is NOT measured:** Real Gemini output quality, evidence-citation accuracy, or unsupported-claim rate. These require `--real-gemini`.
+
+**Corpus:** 15 scenarios across 8 anomaly categories. Three scenarios cannot be fully exercised in replay (see Known Limitations below).  
 **Run:** `python scripts/run_benchmark.py`  
 **Raw results:** [`results/benchmark.json`](results/benchmark.json)
 
-| Mode | Pass Rate | Root-Cause Match | AI Activated | Abstention Rate | Avg Latency (indicative) |
-|---|---|---|---|---|---|
-| **Full Pipeline** | 100% (15/15) | 100% (15/15) | 5/15 | 33.3% (5/15) | ~14 ms |
-| Baseline A (rules-only) | 66.7% (10/15) | 100% (15/15) | 0/15 | 0% (0/15) | ~12 ms |
-| Baseline B1 (raw LLM, no verifier) | 0% (0/15) | 100% (15/15) | 15/15 | 0% (0/15) | ~13 ms |
+### Results (Stub LLM — not real Gemini)
 
-**Interpretation:**
+All metrics below are for the **stubbed pipeline only**. Column meanings:
 
-- **Full pipeline passes 15/15.** Ground truth was derived from actual observed pipeline behavior, so these pass rates represent the pipeline faithfully encoding its own deterministic logic — not an accuracy claim against real incidents.
-- **Baseline A (rules-only) passes 10/15.** The 5 failures are scenarios where the full pipeline correctly abstains with INCONCLUSIVE (AI activated but evidence is insufficient), while Baseline A suppresses AI and reports LOW confidence without abstaining — a behaviorally different and arguably less safe output.
-- **Baseline B1 (raw LLM) passes 0/15.** Every scenario fails the `ai_activated` ground truth check because Baseline B1 forces AI on unconditionally, including for clean HIGH-confidence payments. Root-cause match is still 100% because all three modes use the same deterministic incident detector. The differentiator between modes is *routing + confidence calibration*, not *incident detection*.
-- **Root-cause detection is 100% across all modes** because it is purely deterministic (state machine + incident detector) and does not depend on the AI layer.
+| Column | Numerator | Denominator |
+|---|---|---|
+| Incident detection | scenarios where `set(actual_incidents) == set(expected_incidents)` | all 15 |
+| AI routing | scenarios where `actual_ai_activated == expected_ai_activated` | all 15 |
+| Confidence correct | scenarios where `actual_confidence == expected_confidence` | all 15 |
+| Abstention correct | scenarios where `actual_abstained == expected_abstain` AND `expected_abstain=True` | 5 (where abstention expected) |
+| Pipeline pass | all five fields match ground truth simultaneously | all 15 |
+
+| Mode | Incident Detection | AI Routing | Confidence Correct | Abstention Correct | Pipeline Pass | Latency (indicative) |
+|---|---|---|---|---|---|---|
+| **Full Pipeline (stub LLM)** | 15/15 | 15/15 | 15/15 | 5/5 | 15/15 | ~5 ms |
+| Baseline A (rules only, no AI) | 15/15 | 10/15 | 10/15 | 0/5 | 10/15 | ~4 ms |
+| Baseline B1 (no gate, no verifier, stub LLM) | 15/15 | 5/15 | 10/15 | 0/5 | 0/15 | ~4 ms |
+
+### Interpretation
+
+- **Incident detection is 100% across all modes.** Incident detection is purely deterministic (state machine + incident detector) and is never patched in any mode. It does not depend on the AI layer.
+- **Full pipeline scores 15/15 on all metrics.** Ground truth was derived from actual observed pipeline behaviour with the stub LLM, so this validates that the pipeline is internally self-consistent — not that it correctly diagnoses novel real-world incidents.
+- **Baseline A misses 5 scenarios on routing, confidence, and abstention.** Those 5 are cases where the full pipeline correctly routes to AI investigation, receives INCONCLUSIVE (stub claims rejected), and abstains. Baseline A suppresses AI entirely, reports LOW confidence, and never abstains — a behaviourally less safe output on ambiguous cases.
+- **Baseline B1 "passes 0/15" is misleading if read as accuracy.** B1 has no activation gate so `ai_activated=True` always, differing from scenarios where `expected_ai_activated=False`. Its incident detection is identical to the full pipeline (15/15). Its failure is in routing precision and confidence calibration, not in identifying what happened.
+- **Evidence-citation accuracy, unsupported-claim rate, and real abstention under real Gemini: NOT MEASURED.** Use `--real-gemini` to run these.
+
+### Benchmark Limitations
+
+1. **Stub LLM:** Real Gemini output quality is not measured. The stub always returns a single claim with empty `evidence_ids`, which `verify_claims` always rejects.
+2. **Delayed webhook (scenarios 04, 05) not exercised in replay:** `delayed_webhook` detection requires `ingestion_timestamp`, which is `None` in in-process replay. These scenarios test clean event handling only.
+3. **Incomplete evidence (scenario 13) not exercised in replay:** `missing_evidence` detection requires empty `state_history`, but replay always populates it. This scenario tests clean single-event handling only.
+4. **Abstention is stub-dependent:** Abstention in full_pipeline follows from the stub claim being rejected. With real Gemini providing valid claims, abstention may not occur.
+5. **15 scenarios — not a production accuracy study.** These are hand-crafted correctness scenarios, not a statistical sample of production incidents.
+6. **Latency figures are in-process only.** Not network round-trips. Not production latency.
+
 
