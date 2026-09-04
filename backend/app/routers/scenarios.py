@@ -64,6 +64,41 @@ def _find_scenario_file(scenario_id: str) -> Optional[Path]:
     return None
 
 
+@router.get("")
+def list_scenarios() -> List[Dict[str, Any]]:
+    """
+    List all available scenario fixtures with their metadata.
+    """
+    candidate_dirs = [
+        Path(__file__).resolve().parents[3] / "scenarios",
+        Path(__file__).resolve().parents[2] / "scenarios",
+        Path.cwd() / "scenarios",
+        Path.cwd().parent / "scenarios",
+    ]
+
+    scenarios = {}
+    for d in candidate_dirs:
+        if not d.is_dir():
+            continue
+        for json_file in sorted(d.glob("*.json")):
+            try:
+                data = json.loads(json_file.read_text(encoding="utf-8"))
+                sid = data.get("scenario_id")
+                if sid and sid not in scenarios:
+                    scenarios[sid] = {
+                        "scenario_id": sid,
+                        "name": data.get("name", sid),
+                        "description": data.get("description", ""),
+                        "category": data.get("category", "General"),
+                        "ground_truth": data.get("ground_truth", {}),
+                        "events_count": len(data.get("events", [])),
+                    }
+            except Exception:
+                continue
+
+    return sorted(list(scenarios.values()), key=lambda x: x["scenario_id"])
+
+
 @router.post("/replay")
 def replay_scenario(request: ScenarioReplayRequest) -> Dict[str, Any]:
     """

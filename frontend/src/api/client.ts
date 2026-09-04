@@ -1,4 +1,9 @@
-import type { InvestigationResult, ScenarioResult } from "../types";
+import type {
+  InvestigationResult,
+  ScenarioResult,
+  IncidentRecord,
+  ScenarioFixtureItem,
+} from "../types";
 
 const BASE_URL = (
   (import.meta.env.VITE_API_BASE_URL as string) ||
@@ -11,7 +16,10 @@ export async function investigate(paymentId: string): Promise<InvestigationResul
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ payment_id: paymentId }),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData?.detail || `HTTP ${res.status}`);
+  }
   return res.json();
 }
 
@@ -21,6 +29,39 @@ export async function replayScenario(scenarioId: string): Promise<ScenarioResult
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ scenario_id: scenarioId }),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData?.detail || `HTTP ${res.status}`);
+  }
   return res.json();
+}
+
+export async function fetchIncidents(limit = 50): Promise<IncidentRecord[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/incidents?limit=${limit}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchScenarios(): Promise<ScenarioFixtureItem[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/scenarios`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchHealth(): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetch(`${BASE_URL}/health`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
