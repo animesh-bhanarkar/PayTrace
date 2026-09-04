@@ -9,7 +9,7 @@ from typing import Optional, Any
 from app.config import settings
 from app.database import get_db, get_engine, check_db_connection, Base
 from app.models import SystemProbe, WebhookEvent  # noqa: F401 — ensure all models are registered
-from app.routers import webhooks
+from app.routers import webhooks, investigations
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("paytrace")
@@ -56,6 +56,7 @@ app.add_middleware(
 )
 
 app.include_router(webhooks.router)
+app.include_router(investigations.router)
 
 
 

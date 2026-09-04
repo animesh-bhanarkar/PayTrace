@@ -16,7 +16,7 @@
 
 # 1. CURRENT PHASE
 
-**Day 2 — Payment Intelligence (Step 4: Incident Persistence & Authoritative Rules Complete)**
+**Day 3 — AI Integration Complete**
 
 The PayTrace product and architecture are frozen and approved in:
 
@@ -195,12 +195,17 @@ It must not be used to override the frozen architecture without the required rev
 * [x] Day 2, Step 4: `authoritative_rules.py` created — deterministic confidence and AI-gate logic.
 * [x] Day 2, Step 4: Incidents persisted to DB per webhook event; `confidence_hint` and `requires_ai_investigation` returned in response.
 * [x] Day 2, Step 4: 5 unit tests (authoritative rules) + 2 live Supabase tests (incident persistence) all passed.
+* [x] Day 3: Deterministic AI Activation Gate created (`should_activate_ai`)
+* [x] Day 3: Evidence Package builder created (`build_evidence_package`)
+* [x] Day 3: Gemini Investigator created (`investigate`) with structured JSON schema output
+* [x] Day 3: `/investigations/investigate` endpoint added and registered
+* [x] Day 3: 10 unit tests for activation gate and evidence package all passed
 
 ---
 
 # 5. IN PROGRESS
 
-Day 2 complete — next step is commit + push, then Day 3 (AI integration + frontend dashboard).
+Day 3 complete — next step is frontend dashboard to consume the `/investigations/investigate` endpoint.
 
 ---
 
@@ -218,7 +223,7 @@ None.
 
 # 8. LAST COMPLETED TASK
 
-Day 2, Step 4: `Incident` model added to Supabase, `authoritative_rules.py` created with deterministic confidence/AI-gate logic. Incidents now persisted to DB per webhook. Response body expanded to include `confidence_hint` and `requires_ai_investigation`. 7 tests pass (5 unit + 2 live Supabase). Manual webhook simulation confirmed full pipeline.
+Day 3: AI Activation Gate, Evidence Package Builder, and Gemini Investigator implemented. `/investigations/investigate` endpoint created to orchestrate investigation flow. 10 tests passed. Manual test verified full pipeline successfully generates evidence package and invokes Gemini (handling unavailable model gracefully).
 
 ---
 

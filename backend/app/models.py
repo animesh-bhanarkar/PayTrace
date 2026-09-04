@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Boolean, func
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Boolean, func, Float
 from sqlalchemy.dialects.postgresql import UUID, JSONB, TIMESTAMP
 from app.database import Base
 import uuid
@@ -190,3 +190,28 @@ class Incident(Base):
     # Resolution
     resolved = Column(Boolean, nullable=False, default=False)
     resolution_notes = Column(String(1024), nullable=True)
+
+
+class AuditRecord(Base):
+    __tablename__ = "audit_records"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    payment_id = Column(String(255), nullable=False, index=True)
+    evidence_package_id = Column(String(255), nullable=False)
+    ai_activated = Column(Boolean, nullable=False)
+    activation_reason = Column(String(1024), nullable=True)
+    gemini_raw_output = Column(JSONB, nullable=True)
+    verified_claims = Column(JSONB, nullable=True)
+    confidence_level = Column(String(50), nullable=True)
+    confidence_score = Column(Float, nullable=True)
+    abstained = Column(Boolean, nullable=False, default=False)
+    timestamp = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
