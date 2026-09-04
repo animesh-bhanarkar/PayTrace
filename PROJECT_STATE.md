@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Day 6 Complete — Submission Ready (+ test suite hardening & in-process TestClient conversion, 2026-09-04)
-**Updated by:** Antigravity — Gemini SDK migration (google-genai), README, secret scan, duplicate_webhook fix, 3 adversarial/fallback tests, in-process TestClient conversion. 58 tests passing.
+**Last updated:** Day 6 Complete — Final Verified Submission State (2026-09-04)
+**Updated by:** Antigravity — Gemini SDK migration (google-genai), README, secret scan, duplicate_webhook fix, 3 adversarial/fallback tests, in-process TestClient conversion, benchmark methodology hardening, API-level structured output enforcement, final live verification. 58 tests passing.
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -223,7 +223,7 @@ It must not be used to override the frozen architecture without the required rev
 
 # 5. IN PROGRESS
 
-Nothing in progress. Project is submission-ready.
+Nothing in progress. Project is completely finalized and submission-ready.
 
 ---
 
@@ -247,6 +247,9 @@ Post Day 6 (2026-09-04):
 1. Live scenario replay verification found a real logic bug — Scenario 03 (Duplicate Webhook) returned `passed=false` on live Render infrastructure. Bug fixed in `authoritative_rules.py` (commit `4d27be9`).
 2. Added Gemini failure fallback and prompt injection tests (commit `efdccf8`).
 3. Converted webhook endpoint tests to in-process FastAPI TestClient (commit `b88472e`). Full suite: 58 tests passing.
+4. Hardened benchmark methodology and added metrics to README with explicit labeling for STUB vs REAL LLM (commit `9e471bc`).
+5. Enforced Gemini structured output via API-level `response_schema` complying with PROJECT_CONTEXT.md §22 (commit `393f603`).
+6. Final verification completed: 58 tests passing, clean working tree, live health/replay endpoints fully operational and matching expected behaviour.
 
 ---
 
