@@ -172,10 +172,11 @@ The decision to use Open Track was based on:
 
 The project should NOT claim:
 
-> "Razorpay has no solution for this."
+> "Razorpay has no solution for this." or "Razorpay has not shipped a fix."
 
 Instead, the defensible framing is:
 
+> "We did not find a publicly documented Razorpay product addressing this specific developer-facing payment-state reconstruction problem."
 > **PayTrace targets the gap between payment-data retrieval and automated, evidence-grounded reconstruction of confusing payment incidents for developers.**
 
 ---
@@ -904,9 +905,9 @@ It should also record:
 
 Use async functionality where beneficial.
 
-Investigation streaming is OPTIONAL P2.
-
+Live monitoring and event streaming are OPTIONAL P2.
 Do NOT make streaming a core dependency.
+When implemented, the live layer conveys new evidence, event arrivals, incident updates, and investigation availability—never internal LLM reasoning traces. Lightweight live updates with polling fallback/SSE are used.
 
 ---
 

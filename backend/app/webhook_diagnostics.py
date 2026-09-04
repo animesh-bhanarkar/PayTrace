@@ -323,15 +323,23 @@ def detect_late_authorization(events: List[Any]) -> Dict[str, Any]:
 
 
 def reconcile_states(
-    authoritative_state: Optional[str],
-    trusted_webhook_events: List[Any],
+    authoritative_state: Optional[str] = None,
+    trusted_webhook_events: Optional[List[Any]] = None,
     merchant_state: Optional[str] = None,
+    gateway_state: Optional[str] = None,
+    webhook_events: Optional[List[Any]] = None,
 ) -> Dict[str, Any]:
     """
     Perform deterministic 3-way reconciliation:
     1. Razorpay Authoritative State (from state reconstruction / Razorpay API)
     2. Trusted Webhook Delivery Observations
     3. Merchant-side Processing Belief
+
+    Authority Model:
+    - Razorpay payment/API state is strictly authoritative for Razorpay-side financial/payment state.
+    - Merchant-side records represent merchant belief/state and may disagree with Razorpay.
+    - Webhooks are event-observation/delivery evidence, not automatically authoritative financial truth.
+    - AI must NEVER decide which payment state is financially authoritative.
 
     Classifications:
     - CONSISTENT: Razorpay state and merchant processing state agree.
@@ -340,15 +348,33 @@ def reconcile_states(
     - CONFLICTING_OBSERVATIONS: Evidence disagrees and cannot be reconciled deterministically.
     - INSUFFICIENT_EVIDENCE: Not enough evidence to conclude.
     """
+    auth_state = authoritative_state or gateway_state
+    events = trusted_webhook_events if trusted_webhook_events is not None else (webhook_events or [])
+
     # Normalize states
-    r_state = authoritative_state.lower().strip() if authoritative_state else None
+    r_state = auth_state.lower().strip() if auth_state else None
     m_state = merchant_state.lower().strip() if merchant_state else None
+
+    # Deterministic authority fields
+    authoritative_payment_state = (r_state or "UNKNOWN").upper()
+    merchant_state_norm = (m_state or "NOT_PROVIDED").upper()
+    has_discrepancy = bool(r_state and m_state and r_state != m_state)
+
+    if has_discrepancy:
+        if r_state == "captured" and m_state == "failed":
+            discrepancy = "merchant-side state has not reflected authoritative payment state"
+        elif r_state == "failed" and m_state == "captured":
+            discrepancy = "merchant-side state records capture but authoritative payment state is failed"
+        else:
+            discrepancy = f"merchant-side state ({merchant_state_norm}) has not reflected authoritative payment state ({authoritative_payment_state})"
+    else:
+        discrepancy = None
 
     # Latest trusted webhook observation state
     w_state = None
     w_delayed = False
-    if trusted_webhook_events:
-        latest = trusted_webhook_events[-1]
+    if events:
+        latest = events[-1]
         w_type = getattr(latest, "event_type", "") or ""
         if "captured" in w_type:
             w_state = "captured"
@@ -371,18 +397,26 @@ def reconcile_states(
     if not r_state and not m_state:
         return {
             "status": "INSUFFICIENT_EVIDENCE",
+            "authoritative_payment_state": authoritative_payment_state,
+            "merchant_state": merchant_state_norm,
+            "has_discrepancy": False,
+            "discrepancy": None,
             "razorpay_state": r_state or "Not available",
             "webhook_state": w_state or "Not available",
-            "merchant_state": m_state or "Not available",
+            "merchant_state_raw": m_state,
             "explanation": "Insufficient evidence: neither authoritative Razorpay state nor merchant state is available.",
         }
 
     if m_state is None:
         return {
             "status": "INSUFFICIENT_EVIDENCE",
+            "authoritative_payment_state": authoritative_payment_state,
+            "merchant_state": "Not provided",
+            "has_discrepancy": False,
+            "discrepancy": None,
             "razorpay_state": r_state or "Not available",
             "webhook_state": w_state or "Not available",
-            "merchant_state": "Not provided",
+            "merchant_state_raw": None,
             "explanation": "Merchant processing belief not provided in evidence. Unable to establish merchant agreement.",
         }
 
@@ -391,16 +425,24 @@ def reconcile_states(
         if w_delayed:
             return {
                 "status": "WEBHOOK_DELAYED",
+                "authoritative_payment_state": authoritative_payment_state,
+                "merchant_state": merchant_state_norm,
+                "has_discrepancy": False,
+                "discrepancy": None,
                 "razorpay_state": r_state,
                 "webhook_state": w_state or r_state,
-                "merchant_state": m_state,
+                "merchant_state_raw": m_state,
                 "explanation": f"Razorpay and merchant state agree on '{r_state}', but webhook delivery was delayed.",
             }
         return {
             "status": "CONSISTENT",
+            "authoritative_payment_state": authoritative_payment_state,
+            "merchant_state": merchant_state_norm,
+            "has_discrepancy": False,
+            "discrepancy": None,
             "razorpay_state": r_state,
             "webhook_state": w_state or r_state,
-            "merchant_state": m_state,
+            "merchant_state_raw": m_state,
             "explanation": f"Razorpay authoritative state and merchant processing state agree on '{r_state}'.",
         }
 
@@ -409,33 +451,49 @@ def reconcile_states(
         if w_state == "captured":
             return {
                 "status": "MERCHANT_NOT_UPDATED",
+                "authoritative_payment_state": authoritative_payment_state,
+                "merchant_state": merchant_state_norm,
+                "has_discrepancy": True,
+                "discrepancy": discrepancy,
                 "razorpay_state": r_state,
                 "webhook_state": w_state,
-                "merchant_state": m_state,
+                "merchant_state_raw": m_state,
                 "explanation": "Trusted webhook confirmed capture, but merchant-side state remains stale or un-updated.",
             }
         elif w_delayed:
             return {
                 "status": "WEBHOOK_DELAYED",
+                "authoritative_payment_state": authoritative_payment_state,
+                "merchant_state": merchant_state_norm,
+                "has_discrepancy": True,
+                "discrepancy": discrepancy,
                 "razorpay_state": r_state,
                 "webhook_state": w_state or "Not received",
-                "merchant_state": m_state,
+                "merchant_state_raw": m_state,
                 "explanation": "Payment is captured in Razorpay, but webhook delivery observation was delayed or missing, leaving merchant un-updated.",
             }
         else:
             return {
                 "status": "CONFLICTING_OBSERVATIONS",
+                "authoritative_payment_state": authoritative_payment_state,
+                "merchant_state": merchant_state_norm,
+                "has_discrepancy": True,
+                "discrepancy": discrepancy,
                 "razorpay_state": r_state,
                 "webhook_state": w_state or "Not available",
-                "merchant_state": m_state,
+                "merchant_state_raw": m_state,
                 "explanation": "Razorpay authoritative state is captured, but merchant state indicates failure or conflicting belief.",
             }
 
     # Rule 4: Conflicting observations
     return {
         "status": "CONFLICTING_OBSERVATIONS",
+        "authoritative_payment_state": authoritative_payment_state,
+        "merchant_state": merchant_state_norm,
+        "has_discrepancy": True,
+        "discrepancy": discrepancy,
         "razorpay_state": r_state or "Unknown",
         "webhook_state": w_state or "Unknown",
-        "merchant_state": m_state,
+        "merchant_state_raw": m_state,
         "explanation": f"Disagreement between Razorpay authoritative state ('{r_state}') and merchant belief ('{m_state}').",
     }

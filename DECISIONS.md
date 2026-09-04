@@ -864,15 +864,18 @@ The core PayTrace architecture must work without it.
 
 ---
 
-## D-036 — Streaming Is P2
-
+## D-036 — Live Monitoring & Event Streaming Is P2
+ 
 **Status:** APPROVED / P2
 
 **Decision:**
 
-Investigation streaming is optional.
+Live monitoring and event streaming are optional enhancements and must not become a core dependency.
 
-Streaming must not become a core dependency.
+When implemented:
+- The live layer describes: new evidence, event arrival, incident state updates, and investigation availability/status.
+- PayTrace does NOT stream hidden LLM reasoning traces.
+- Delivery uses lightweight live updates with polling fallback / Server-Sent Events (SSE).
 
 ---
 

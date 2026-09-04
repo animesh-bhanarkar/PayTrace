@@ -172,6 +172,19 @@ def verify_claims(
         stmt_lower = statement.lower()
         cited_events = [ev for ev in package_events if ev.get("evidence_id") in evidence_ids]
 
+        # Check authoritative payment state contradiction
+        contradiction = _check_authoritative_contradiction(statement, current_state)
+        if contradiction:
+            verified_claims.append(VerifiedClaim(
+                claim_id=claim_id,
+                statement=statement,
+                verdict="REJECTED",
+                rejection_reason=contradiction,
+                evidence_ids=evidence_ids,
+                confidence=confidence,
+            ))
+            continue
+
         # Check signature verification claims
         if ("signature" in stmt_lower and ("invalid" in stmt_lower or "failed" in stmt_lower or "mismatch" in stmt_lower)):
             if cited_events and all(ev.get("signature_valid") is True for ev in cited_events):
@@ -247,9 +260,23 @@ _CONTRADICTION_PATTERNS = [
     ("payment did not capture", {"captured"}),
     ("payment remained failed", {"captured"}),
     ("transaction failed", {"captured"}),
+    ("payment state is failed", {"captured"}),
+    ("payment status is failed", {"captured"}),
+    ("payment was failed", {"captured"}),
+    ("payment is failed", {"captured"}),
+    ("authoritative payment state is failed", {"captured"}),
+    ("authoritative state is failed", {"captured"}),
+    ("payment was not captured", {"captured"}),
+    ("payment never captured", {"captured"}),
     ("payment succeeded", {"failed"}),
     ("payment captured", {"failed"}),
     ("payment authorized", {"failed"}),
+    ("payment state is captured", {"failed"}),
+    ("payment status is captured", {"failed"}),
+    ("payment was captured", {"failed"}),
+    ("payment is captured", {"failed"}),
+    ("authoritative payment state is captured", {"failed"}),
+    ("authoritative state is captured", {"failed"}),
 ]
 
 
@@ -264,12 +291,13 @@ def _check_authoritative_contradiction(
     if not authoritative_state:
         return None
 
-    stmt_lower = statement.lower()
+    stmt_lower = statement.lower().strip()
+    auth_lower = authoritative_state.lower().strip()
     for keyword, contradicted_by in _CONTRADICTION_PATTERNS:
-        if keyword in stmt_lower and authoritative_state in contradicted_by:
+        if keyword in stmt_lower and auth_lower in contradicted_by:
             return (
                 f"Claim contradicts authoritative payment state "
-                f"('{keyword}' vs authoritative state='{authoritative_state}'). "
+                f"('{keyword}' vs authoritative state='{auth_lower}'). "
                 f"Authoritative evidence wins."
             )
     return None

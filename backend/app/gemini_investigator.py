@@ -105,6 +105,8 @@ reconstructed payment state, and detected incidents.
 Investigate the payment incident and return your findings.
 
 Rules you must follow:
+- Razorpay payment/API state is strictly authoritative for financial/payment state. AI must NEVER decide or override authoritative payment state.
+- Merchant-side records represent merchant belief and may disagree with Razorpay. AI investigates only the causal reason for the disagreement.
 - Only cite evidence_ids that exist in the provided events list.
 - Every claim must cite at least one evidence_id.
 - Do not invent payment IDs, amounts, or timestamps not present in the evidence.
@@ -394,22 +396,23 @@ You receive a structured evidence package labeled with trust categories:
 Your task: reason over the evidence and produce a structured investigation.
 
 STRICT RULES:
-1. Only cite evidence_id values that appear in the 'events' array of the package.
-2. Do not invent payment IDs, order IDs, event IDs, timestamps, or error codes.
-3. HISTORICAL_CONTEXT and PATTERN_CONTEXT inform hypotheses but CANNOT verify claims.
+1. Razorpay payment/API state is strictly authoritative for payment state. AI must NEVER decide or override authoritative payment state. Merchant records represent merchant belief. Reason only about causal explanations for disagreements.
+2. Only cite evidence_id values that appear in the 'events' array of the package.
+3. Do not invent payment IDs, order IDs, event IDs, timestamps, or error codes.
+4. HISTORICAL_CONTEXT and PATTERN_CONTEXT inform hypotheses but CANNOT verify claims.
    A similar past incident does NOT prove anything about the current incident.
-4. Distinguish claim_type:
+5. Distinguish claim_type:
    - OBSERVATION: directly readable from event fields (status, timestamp).
    - INTERPRETATION: inferred from multiple observations.
    - CAUSAL: asserts a cause-effect relationship — requires strong evidence.
-5. Never mark a hypothesis SUPPORTED without supporting_evidence_ids in the package.
-6. If the authoritative payment state contradicts your hypothesis, note it in
+6. Never mark a hypothesis SUPPORTED without supporting_evidence_ids in the package.
+7. If the authoritative payment state contradicts your hypothesis, note it in
    contradicting_claims — do not hide the contradiction.
-7. Set abstention_signal to INSUFFICIENT_EVIDENCE if critical evidence is missing.
-8. Set abstention_signal to CONFLICTING if payment state evidence contradicts itself.
-9. Do not recommend autonomous payment actions (capture, refund, retry, etc.).
+8. Set abstention_signal to INSUFFICIENT_EVIDENCE if critical evidence is missing.
+9. Set abstention_signal to CONFLICTING if payment state evidence contradicts itself.
+10. Do not recommend autonomous payment actions (capture, refund, retry, etc.).
    Recommendations are for human investigators only.
-10. Keep all strings within the character limits specified in the schema.
+11. Keep all strings within the character limits specified in the schema.
 """
 
 
