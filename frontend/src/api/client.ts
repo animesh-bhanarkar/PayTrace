@@ -491,5 +491,46 @@ export async function fetchWebhookReconciliation(
   return res.json();
 }
 
+// --- PHASE 8: ADVANCED AI INVESTIGATION METHODS ---
 
+export async function runAdvancedInvestigation(
+  incidentId: string | number
+): Promise<import("../types").AdvancedInvestigationResult> {
+  const res = await fetch(
+    `${BASE_URL}/investigations/${encodeURIComponent(String(incidentId))}/investigate/advanced`,
+    {
+      method: "POST",
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
 
+export async function fetchLatestAdvancedInvestigation(
+  incidentId: string | number
+): Promise<any> {
+  const res = await fetch(
+    `${BASE_URL}/investigations/${encodeURIComponent(String(incidentId))}/advanced/latest`
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchAdvancedInvestigationHistory(
+  incidentId: string | number
+): Promise<import("../types").AdvancedInvestigationHistoryResponse> {
+  const res = await fetch(
+    `${BASE_URL}/investigations/${encodeURIComponent(String(incidentId))}/advanced/history`
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

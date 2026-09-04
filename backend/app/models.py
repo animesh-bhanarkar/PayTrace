@@ -232,6 +232,23 @@ class AuditRecord(Base):
         nullable=False,
     )
 
+    # Phase 8 — Advanced AI Investigation fields
+    # 'standard' | 'advanced'
+    investigation_type = Column(String(20), nullable=False, default="standard")
+    # SHA-256 hash of deterministic evidence package content
+    evidence_package_hash = Column(String(64), nullable=True)
+    # Structured hypotheses list from advanced AI investigation
+    hypotheses = Column(JSONB, nullable=True)
+    # Structured causal chain from advanced AI investigation
+    causal_chain = Column(JSONB, nullable=True)
+    # RESOLVED_WITH_HIGH_CONFIDENCE | RESOLVED_WITH_MEDIUM_CONFIDENCE | LOW_CONFIDENCE
+    # | INCONCLUSIVE | AI_UNAVAILABLE | DETERMINISTIC_RESULT
+    investigation_outcome = Column(String(50), nullable=True)
+    # {provider, model, duration_ms, activation_reason}
+    model_metadata = Column(JSONB, nullable=True)
+    # Wall-clock time in milliseconds for the AI call
+    duration_ms = Column(Float, nullable=True)
+
 
 class IncidentNote(Base):
     """

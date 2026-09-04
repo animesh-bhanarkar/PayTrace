@@ -15,6 +15,7 @@ import { InvestigationReportModal } from "./InvestigationReportModal";
 import { MissingEvidenceCard } from "./MissingEvidenceCard";
 import { SimilarIncidentsCard } from "./SimilarIncidentsCard";
 import { WebhookDiagnosticsCard } from "./WebhookDiagnosticsCard";
+import { AdvancedInvestigationWorkspace } from "./AdvancedInvestigationWorkspace";
 import {
   resolveIncident,
   reopenIncident,
@@ -46,6 +47,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Radio,
+  BrainCircuit,
+  Sparkles,
 } from "lucide-react";
 
 interface IncidentDetailProps {
@@ -123,7 +126,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
 
   // View tabs
-  const [activeViewTab, setActiveViewTab] = useState<"overview" | "webhooks" | "history" | "graph" | "timeline">("overview");
+  const [activeViewTab, setActiveViewTab] = useState<"overview" | "advanced" | "webhooks" | "history" | "graph" | "timeline">("overview");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -684,6 +687,21 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveViewTab("advanced")}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+            activeViewTab === "advanced"
+              ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <BrainCircuit className="w-4 h-4 text-purple-400" />
+          <span>Advanced AI</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">
+            Phase 8
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveViewTab("webhooks")}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
             activeViewTab === "webhooks"
@@ -818,6 +836,15 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
         </div>
       )}
 
+      {/* ── View: Advanced AI Investigation Tab ──────────────────────────────── */}
+      {activeViewTab === "advanced" && (
+        <AdvancedInvestigationWorkspace
+          incidentId={String(incidentMeta?.id || paymentId)}
+          paymentId={paymentId}
+          onSelectEvidence={onSelectEvidence}
+        />
+      )}
+
       {/* ── View: Webhook Diagnostics Tab ──────────────────────────────────── */}
       {activeViewTab === "webhooks" && (
         <WebhookDiagnosticsCard paymentId={paymentId} onSelectEvent={onSelectEvidence} />
@@ -826,6 +853,36 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
       {/* ── View: Main Overview Dual-Column Layout ───────────────────────────── */}
       {activeViewTab === "overview" && (
         <div className="space-y-6">
+          {/* Phase 8: Advanced AI Investigation Entrypoint Banner */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900 border border-indigo-500/30 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                <BrainCircuit className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    Advanced AI Investigation Available
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 font-mono">
+                    Phase 8
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Synthesize competing hypotheses, evaluate causal event traces, verify claims with 5-verdict precision, and explore counterfactuals.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveViewTab("advanced")}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Open Advanced Workspace</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Phase 7: Razorpay Webhook Diagnostics Card */}
           <WebhookDiagnosticsCard paymentId={paymentId} onSelectEvent={onSelectEvidence} />
 

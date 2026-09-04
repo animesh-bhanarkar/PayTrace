@@ -486,4 +486,145 @@ export interface IncidentWebhooksResponse {
   webhooks: WebhookEventItem[];
 }
 
+// ==========================================
+// Phase 8: Advanced AI Investigation Types
+// ==========================================
+
+export type ClaimVerdict =
+  | "VERIFIED"
+  | "PARTIALLY_VERIFIED"
+  | "UNSUPPORTED"
+  | "CONTRADICTED"
+  | "UNVERIFIABLE";
+
+export type InvestigationOutcome =
+  | "AUTHORITATIVE_CONFIRMED"
+  | "HIGH_CONFIDENCE_RECONSTRUCTED"
+  | "MULTI_HYPOTHESIS_AMBIGUOUS"
+  | "CONTRADICTED_SUSPICIOUS"
+  | "INSUFFICIENT_EVIDENCE"
+  | "INVESTIGATION_FAILED";
+
+export type HypothesisStatus = "SUPPORTED" | "REFUTED" | "PLAUSIBLE_UNVERIFIED";
+
+export type CausalStepStatus = "VERIFIED" | "PLAUSIBLE" | "CONTRADICTED" | "GAP";
+
+export interface AdvancedClaim {
+  claim_id: string;
+  statement: string;
+  verdict: ClaimVerdict;
+  evidence_ids: string[];
+  explanation: string;
+  contradicts_evidence_ids: string[];
+  authoritative_agreement: boolean;
+  confidence_weight: number;
+}
+
+export interface HypothesisVerification {
+  hypothesis_id: string;
+  title: string;
+  description: string;
+  status: HypothesisStatus;
+  supporting_claim_ids: string[];
+  contradicting_claim_ids: string[];
+  verification_notes: string;
+  likelihood_score: number;
+}
+
+export interface CausalStepVerification {
+  step_index: number;
+  event_type: string;
+  description: string;
+  status: CausalStepStatus;
+  evidence_id?: string | null;
+  timing_delta_ms?: number | null;
+  verification_notes: string;
+}
+
+export interface WhyNotAlternative {
+  alternative_scenario: string;
+  ruled_out_reason: string;
+  contradicting_evidence_ids: string[];
+}
+
+export interface AdvancedInvestigationPayload {
+  summary?: string;
+  primary_hypothesis?: string;
+  alternative_hypotheses?: Array<{ hypothesis_id: string; title: string; description: string }>;
+  causal_chain?: Array<{ step_index: number; event_type: string; description: string; evidence_id?: string | null }>;
+  supporting_claims?: any[];
+  contradicting_claims?: any[];
+  missing_evidence?: string[];
+  recommended_checks?: string[];
+  reasoning_summary?: string;
+  why_not_alternatives?: WhyNotAlternative[];
+  abstention_signal?: string;
+}
+
+export interface AdvancedInvestigationResult {
+  incident_id: string;
+  payment_id: string;
+  investigation_type: "advanced";
+  ai_activated: boolean;
+  activation_reason: string;
+  investigation_outcome: InvestigationOutcome;
+  confidence: {
+    outcome: InvestigationOutcome;
+    score: number;
+    abstain: boolean;
+    reasoning: string;
+    signals?: {
+      verified_claims_count?: number;
+      unsupported_claims_count?: number;
+      contradicted_claims_count?: number;
+      partially_verified_claims_count?: number;
+      contradiction_penalty?: number;
+      causal_chain_verified_rate?: number;
+      authoritative_agreement?: boolean;
+      claim_ratio?: number;
+    };
+  };
+  abstained: boolean;
+  authoritative_result?: Record<string, unknown>;
+  advanced_investigation?: AdvancedInvestigationPayload;
+  verified_claims: AdvancedClaim[];
+  hypothesis_verifications: HypothesisVerification[];
+  causal_chain_verifications: CausalStepVerification[];
+  missing_evidence_report?: Record<string, unknown>;
+  model_metadata?: {
+    provider: string;
+    model: string;
+    duration_ms?: number;
+  };
+  audit_record_id: string;
+  evidence_package_hash: string;
+  duration_ms: number;
+}
+
+export interface AdvancedInvestigationVersion {
+  version_number: number;
+  id: string;
+  payment_id: string;
+  ai_activated: boolean;
+  activation_reason?: string;
+  investigation_outcome?: InvestigationOutcome;
+  confidence_level?: string;
+  confidence_score?: number;
+  abstained: boolean;
+  claims_count: number;
+  verified_claims_count: number;
+  contradicted_claims_count: number;
+  evidence_package_hash?: string;
+  model_metadata?: Record<string, unknown>;
+  duration_ms?: number;
+  timestamp?: string;
+}
+
+export interface AdvancedInvestigationHistoryResponse {
+  incident_id: string;
+  payment_id: string;
+  total_versions: number;
+  versions: AdvancedInvestigationVersion[];
+}
+
 

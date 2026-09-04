@@ -34,6 +34,14 @@ def upgrade_schema(engine):
             "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS payload_hash VARCHAR(64);",
             "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS payload_size_bytes INTEGER;",
             "ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS error_details JSONB;",
+            # Phase 8 — Advanced AI Investigation
+            "ALTER TABLE audit_records ADD COLUMN IF NOT EXISTS investigation_type VARCHAR(20) NOT NULL DEFAULT 'standard';",
+            "ALTER TABLE audit_records ADD COLUMN IF NOT EXISTS evidence_package_hash VARCHAR(64);",
+            "ALTER TABLE audit_records ADD COLUMN IF NOT EXISTS hypotheses JSONB;",
+            "ALTER TABLE audit_records ADD COLUMN IF NOT EXISTS causal_chain JSONB;",
+            "ALTER TABLE audit_records ADD COLUMN IF NOT EXISTS investigation_outcome VARCHAR(50);",
+            "ALTER TABLE audit_records ADD COLUMN IF NOT EXISTS model_metadata JSONB;",
+            "ALTER TABLE audit_records ADD COLUMN IF NOT EXISTS duration_ms DOUBLE PRECISION;",
         ]
         try:
             with engine.connect() as conn:
@@ -78,6 +86,25 @@ def upgrade_schema(engine):
                         conn.execute(text("ALTER TABLE webhook_events ADD COLUMN payload_size_bytes INTEGER;"))
                     if "error_details" not in wh_cols:
                         conn.execute(text("ALTER TABLE webhook_events ADD COLUMN error_details JSON;"))
+
+                # Phase 8 — Advanced AI Investigation columns
+                ar_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(audit_records);")).fetchall()]
+                if ar_cols:
+                    if "investigation_type" not in ar_cols:
+                        conn.execute(text("ALTER TABLE audit_records ADD COLUMN investigation_type VARCHAR(20) DEFAULT 'standard';"))
+                    if "evidence_package_hash" not in ar_cols:
+                        conn.execute(text("ALTER TABLE audit_records ADD COLUMN evidence_package_hash VARCHAR(64);"))
+                    if "hypotheses" not in ar_cols:
+                        conn.execute(text("ALTER TABLE audit_records ADD COLUMN hypotheses JSON;"))
+                    if "causal_chain" not in ar_cols:
+                        conn.execute(text("ALTER TABLE audit_records ADD COLUMN causal_chain JSON;"))
+                    if "investigation_outcome" not in ar_cols:
+                        conn.execute(text("ALTER TABLE audit_records ADD COLUMN investigation_outcome VARCHAR(50);"))
+                    if "model_metadata" not in ar_cols:
+                        conn.execute(text("ALTER TABLE audit_records ADD COLUMN model_metadata JSON;"))
+                    if "duration_ms" not in ar_cols:
+                        conn.execute(text("ALTER TABLE audit_records ADD COLUMN duration_ms FLOAT;"))
+
                 conn.commit()
         except Exception:
             pass
