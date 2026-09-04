@@ -42,6 +42,7 @@ export interface InvestigationResult {
     uncertainty?: string;
     [key: string]: unknown;
   } | null;
+  missing_evidence_report?: MissingEvidenceReport | null;
   evidence_package: {
     payment_id?: string;
     reconstructed_state?: string;
@@ -160,3 +161,149 @@ export type NavigationTab =
   | "reports"
   | "integrations"
   | "settings";
+
+// --- PHASE 4: INVESTIGATION INTELLIGENCE TYPES ---
+
+export type EvidenceTrustStatus = "TRUSTED" | "UNTRUSTED" | "DERIVED";
+
+export interface EvidenceItem {
+  id: string;
+  evidence_id: string;
+  payment_id?: string | null;
+  order_id?: string | null;
+  event_type: string;
+  source: string;
+  status: string;
+  trust_status: EvidenceTrustStatus;
+  signature_valid: boolean;
+  event_timestamp?: string | null;
+  ingestion_timestamp?: string | null;
+  delay_seconds?: number | null;
+  payload_hash?: string | null;
+}
+
+export interface EvidenceDetailResponse {
+  id: string;
+  evidence_id: string;
+  payment_id?: string | null;
+  order_id?: string | null;
+  event_type: string;
+  source: string;
+  status: string;
+  trust_status: EvidenceTrustStatus;
+  trust_rationale: string;
+  signature_valid: boolean;
+  event_timestamp?: string | null;
+  ingestion_timestamp?: string | null;
+  delay_seconds?: number | null;
+  payload_hash?: string | null;
+  normalized_fields: Record<string, unknown>;
+  raw_payload_sanitized?: Record<string, unknown> | null;
+  related_incidents: Array<{
+    id: string;
+    incident_type: string;
+    severity: string;
+    description: string;
+    resolved: boolean;
+  }>;
+  related_claims: Array<{
+    claim_id: string;
+    statement: string;
+    verdict?: string | null;
+    confidence?: string | null;
+    investigation_id?: string | null;
+  }>;
+}
+
+export interface MissingEvidenceReport {
+  has_missing_evidence: boolean;
+  reason: string;
+  missing_evidence: string[];
+  recommended_next_evidence: string[];
+  lifecycle_completeness: number; // 0.0 to 1.0
+}
+
+export interface InvestigationHistoryItem {
+  id: string;
+  payment_id: string;
+  evidence_package_id: string;
+  ai_activated: boolean;
+  activation_reason?: string | null;
+  hypothesis?: string | null;
+  claim_count: number;
+  supported_claims_count: number;
+  rejected_claims_count: number;
+  confidence_level: string;
+  confidence_score: number;
+  abstained: boolean;
+  timestamp: string;
+}
+
+export interface InvestigationVersionItem {
+  version_number: number;
+  id: string;
+  payment_id: string;
+  ai_activated: boolean;
+  activation_reason?: string | null;
+  confidence_level: string;
+  confidence_score: number;
+  abstained: boolean;
+  claims_count: number;
+  timestamp: string;
+  verified_claims: Array<Record<string, unknown>>;
+}
+
+export interface InvestigationComparisonResult {
+  payment_id: string;
+  v1: {
+    id: string;
+    timestamp: string;
+    ai_activated: boolean;
+    confidence_level: string;
+    confidence_score: number;
+    abstained: boolean;
+    claims_count: number;
+  };
+  v2: {
+    id: string;
+    timestamp: string;
+    ai_activated: boolean;
+    confidence_level: string;
+    confidence_score: number;
+    abstained: boolean;
+    claims_count: number;
+  };
+  confidence_changed: boolean;
+  ai_activated_changed: boolean;
+  abstention_changed: boolean;
+  claims_count_diff: number;
+  claim_diffs: Array<{
+    claim_id: string;
+    v1_verdict: string | null;
+    v2_verdict: string | null;
+    statement: string;
+    changed: boolean;
+  }>;
+}
+
+export interface ClaimVerificationSummaryItem {
+  payment_id: string;
+  claim_id: string;
+  statement: string;
+  verdict: "SUPPORTED" | "REJECTED" | "UNVERIFIABLE" | string;
+  rejection_reason?: string | null;
+  evidence_ids: string[];
+  confidence?: string | null;
+  investigation_id: string;
+  investigation_timestamp?: string | null;
+}
+
+export interface ClaimVerificationCenterData {
+  total_claims: number;
+  verified_claims: number;
+  rejected_claims: number;
+  unverifiable_claims: number;
+  verification_rate: number;
+  claims: ClaimVerificationSummaryItem[];
+}
+

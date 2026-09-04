@@ -5,6 +5,7 @@ import { ClaimsPanel } from "./ClaimsPanel";
 import { ConfidenceGauge } from "./ConfidenceGauge";
 import { EvidenceClaimGraph } from "./EvidenceClaimGraph";
 import { InvestigationReportModal } from "./InvestigationReportModal";
+import { MissingEvidenceCard } from "./MissingEvidenceCard";
 import {
   resolveIncident,
   reopenIncident,
@@ -36,12 +37,14 @@ interface IncidentDetailProps {
     created_at?: string | null;
   };
   onBack: () => void;
+  onSelectEvidence?: (evidenceId: string) => void;
 }
 
 export const IncidentDetail: React.FC<IncidentDetailProps> = ({
   investigationResult,
   incidentMeta,
   onBack,
+  onSelectEvidence,
 }) => {
   const [resolvedState, setResolvedState] = useState<boolean>(
     Boolean(incidentMeta?.resolved)
@@ -288,6 +291,11 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
           </span>
         </div>
       </div>
+
+      {/* ── Deterministic Missing Evidence Engine ── */}
+      {investigationResult.missing_evidence_report && (
+        <MissingEvidenceCard report={investigationResult.missing_evidence_report} />
+      )}
 
       {/* ── View Tab Switcher (Overview / Traceability Graph / Event Timeline) ── */}
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
@@ -538,25 +546,30 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
               </div>
 
               <div className="space-y-2.5">
-                {events.slice(0, 3).map((ev, i) => (
-                  <div
-                    key={i}
-                    className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start justify-between gap-3 text-xs"
-                  >
-                    <div className="flex items-start gap-2 min-w-0">
-                      <span className="text-emerald-500 font-bold shrink-0 mt-0.5">✓</span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">
-                          {String(ev.event_type || ev.event || "Payment event")}
-                        </p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                          {String(ev.evidence_id || `evt_${i + 1}`)} • via {String(ev.source || "webhook")}
-                        </p>
+                {events.slice(0, 3).map((ev, i) => {
+                  const evId = String(ev.evidence_id || ev.event_id || `evt_${i + 1}`);
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => onSelectEvidence?.(evId)}
+                      className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start justify-between gap-3 text-xs hover:border-blue-500/50 cursor-pointer transition-all group"
+                      title="Inspect cryptographic evidence detail"
+                    >
+                      <div className="flex items-start gap-2 min-w-0">
+                        <span className="text-emerald-500 font-bold shrink-0 mt-0.5">✓</span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-400 transition-colors">
+                            {String(ev.event_type || ev.event || "Payment event")}
+                          </p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                            {evId} • via {String(ev.source || "webhook")}
+                          </p>
+                        </div>
                       </div>
+                      <span className="text-slate-400 group-hover:text-blue-400 text-sm">📄</span>
                     </div>
-                    <span className="text-slate-400 text-sm">📄</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

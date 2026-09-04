@@ -160,4 +160,97 @@ export async function fetchGlobalTimeline(
   return res.json();
 }
 
+// --- PHASE 4 API METHODS ---
+
+export async function fetchEvidenceList(params?: {
+  payment_id?: string;
+  trust_status?: string;
+  event_type?: string;
+  limit?: number;
+}): Promise<import("../types").EvidenceItem[]> {
+  const q = new URLSearchParams();
+  if (params?.payment_id) q.set("payment_id", params.payment_id);
+  if (params?.trust_status && params.trust_status !== "ALL") q.set("trust_status", params.trust_status);
+  if (params?.event_type && params.event_type !== "ALL") q.set("event_type", params.event_type);
+  if (params?.limit) q.set("limit", String(params.limit));
+
+  const res = await fetch(`${BASE_URL}/evidence?${q.toString()}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchEvidenceDetail(
+  eventId: string
+): Promise<import("../types").EvidenceDetailResponse> {
+  const res = await fetch(`${BASE_URL}/evidence/${encodeURIComponent(eventId)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchInvestigationHistory(params?: {
+  payment_id?: string;
+  ai_activated?: boolean;
+  confidence_level?: string;
+  limit?: number;
+}): Promise<import("../types").InvestigationHistoryItem[]> {
+  const q = new URLSearchParams();
+  if (params?.payment_id) q.set("payment_id", params.payment_id);
+  if (params?.ai_activated !== undefined) q.set("ai_activated", String(params.ai_activated));
+  if (params?.confidence_level && params.confidence_level !== "ALL") q.set("confidence_level", params.confidence_level);
+  if (params?.limit) q.set("limit", String(params.limit));
+
+  const res = await fetch(`${BASE_URL}/investigations/history?${q.toString()}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchInvestigationVersions(
+  paymentId: string
+): Promise<import("../types").InvestigationVersionItem[]> {
+  const res = await fetch(`${BASE_URL}/investigations/history/${encodeURIComponent(paymentId)}/versions`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function compareInvestigationVersions(
+  v1Id: string,
+  v2Id: string
+): Promise<import("../types").InvestigationComparisonResult> {
+  const q = new URLSearchParams({ v1_id: v1Id, v2_id: v2Id });
+  const res = await fetch(`${BASE_URL}/investigations/compare?${q.toString()}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchClaimsSummary(params?: {
+  limit?: number;
+  payment_id?: string;
+}): Promise<import("../types").ClaimVerificationCenterData> {
+  const q = new URLSearchParams();
+  if (params?.limit) q.set("limit", String(params.limit));
+  if (params?.payment_id) q.set("payment_id", params.payment_id);
+
+  const res = await fetch(`${BASE_URL}/investigations/claims/summary?${q.toString()}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 

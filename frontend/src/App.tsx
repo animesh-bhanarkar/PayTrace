@@ -9,6 +9,10 @@ import { GlobalSearch } from "./components/GlobalSearch";
 import { TimelineExplorer } from "./components/TimelineExplorer";
 import { IntegrationsView } from "./components/IntegrationsView";
 import { SettingsView } from "./components/SettingsView";
+import { EvidenceExplorer } from "./components/EvidenceExplorer";
+import { EvidenceDetailModal } from "./components/EvidenceDetailModal";
+import { ClaimVerificationCenter } from "./components/ClaimVerificationCenter";
+import { InvestigationHistoryView } from "./components/InvestigationHistoryView";
 import {
   investigate,
   replayScenario,
@@ -50,6 +54,10 @@ function PayTraceApp() {
 
   // Scenario Replay state
   const [activeLoadingScenario, setActiveLoadingScenario] = useState<string | null>(null);
+
+  // Phase 4 Intelligence state
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(null);
+  const [investigationSubTab, setInvestigationSubTab] = useState<"history" | "claims">("claims");
 
   // Initial load
   useEffect(() => {
@@ -203,9 +211,9 @@ function PayTraceApp() {
       case "timeline":
         return "Cross-Incident Timeline Explorer";
       case "evidence":
-        return "Verified Evidence Repository";
+        return "Cryptographic Evidence Explorer";
       case "investigations":
-        return "AI Investigations & Gate Audits";
+        return "Investigation Intelligence & Claim Verification";
       case "reports":
         return "Compliance Dossiers & Incident Reports";
       case "integrations":
@@ -264,6 +272,7 @@ function PayTraceApp() {
               investigationResult={investigationResult}
               incidentMeta={selectedIncidentMeta || undefined}
               onBack={handleBackToIncidents}
+              onSelectEvidence={(eid) => setSelectedEvidenceId(eid)}
             />
           ) : selectedPaymentId && investigating ? (
             <div className="py-24 text-center space-y-3">
@@ -300,44 +309,48 @@ function PayTraceApp() {
             /* VIEW: Timeline Explorer */
             <TimelineExplorer onSelectIncident={handleSelectIncident} />
           ) : activeTab === "evidence" ? (
-            /* VIEW: Evidence Repository */
-            <div className="space-y-4">
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Verified Evidence Repository
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Inspect normalized payment evidence packages across all captured sessions.
-                </p>
-              </div>
-              <IncidentsExplorer
-                incidents={incidentsList}
-                scenarios={scenariosList}
-                onSelectIncident={handleSelectIncident}
-                onReplayScenario={handleReplayScenario}
-                loadingScenarioId={activeLoadingScenario}
-                loading={loadingData}
-              />
-            </div>
+            /* VIEW: Evidence Explorer */
+            <EvidenceExplorer
+              onSelectEvidence={(eid) => setSelectedEvidenceId(eid)}
+              onSelectPayment={(pid) => handleSelectIncident(pid)}
+            />
           ) : activeTab === "investigations" ? (
-            /* VIEW: AI Investigations */
-            <div className="space-y-4">
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  AI Investigations & Activation Audits
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Review Gemini AI root cause investigations and anti-hallucination claim audits.
-                </p>
+            /* VIEW: AI Investigations Intelligence & Claims */
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+                <button
+                  onClick={() => setInvestigationSubTab("claims")}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    investigationSubTab === "claims"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  ✓ Claim Verification Scorecard
+                </button>
+                <button
+                  onClick={() => setInvestigationSubTab("history")}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    investigationSubTab === "history"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  ⇄ History & Version Comparison
+                </button>
               </div>
-              <IncidentsExplorer
-                incidents={incidentsList.filter((i) => i.ai_required || i.severity === "HIGH")}
-                scenarios={scenariosList.filter((s) => s.ground_truth.expected_ai_activated)}
-                onSelectIncident={handleSelectIncident}
-                onReplayScenario={handleReplayScenario}
-                loadingScenarioId={activeLoadingScenario}
-                loading={loadingData}
-              />
+
+              {investigationSubTab === "claims" ? (
+                <ClaimVerificationCenter
+                  onSelectEvidence={(eid) => setSelectedEvidenceId(eid)}
+                  onSelectPayment={(pid) => handleSelectIncident(pid)}
+                />
+              ) : (
+                <InvestigationHistoryView
+                  onSelectPayment={(pid) => handleSelectIncident(pid)}
+                  onSelectEvidence={(eid) => setSelectedEvidenceId(eid)}
+                />
+              )}
             </div>
           ) : activeTab === "reports" ? (
             /* VIEW: Reports */
@@ -368,6 +381,16 @@ function PayTraceApp() {
           ) : null}
         </main>
       </div>
+
+      {/* Global Cryptographic Evidence Detail Modal */}
+      <EvidenceDetailModal
+        evidenceId={selectedEvidenceId}
+        onClose={() => setSelectedEvidenceId(null)}
+        onSelectPayment={(pid) => {
+          setSelectedEvidenceId(null);
+          handleSelectIncident(pid);
+        }}
+      />
     </div>
   );
 }
