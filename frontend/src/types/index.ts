@@ -154,6 +154,7 @@ export interface TimelineFilterState {
 export type NavigationTab =
   | "overview"
   | "incidents"
+  | "patterns"
   | "search"
   | "timeline"
   | "evidence"
@@ -306,4 +307,55 @@ export interface ClaimVerificationCenterData {
   verification_rate: number;
   claims: ClaimVerificationSummaryItem[];
 }
+
+// --- PHASE 5: ADVANCED INCIDENT INTELLIGENCE TYPES ---
+
+export interface SimilarIncidentItem {
+  incident_id: string;
+  payment_id?: string | null;
+  order_id?: string | null;
+  incident_type: string;
+  severity: string;
+  description: string;
+  resolved: boolean;
+  detected_at?: string | null;
+  similarity_score: number;
+  matching_features: string[];
+  non_matching_critical_features: string[];
+  comparison_summary: string;
+}
+
+export interface PatternSummaryItem {
+  pattern_id: string;
+  pattern_name: string;
+  pattern_type: string;
+  incident_count: number;
+  affected_payments_count: number;
+  severity: string;
+  first_detected_at?: string | null;
+  last_detected_at?: string | null;
+  pattern_strength: "STRONG" | "MODERATE" | "EMERGING" | string;
+  diagnostic_characteristics: string[];
+  supporting_incident_ids: string[];
+  supporting_payment_ids: string[];
+  sample_incidents: Array<{
+    incident_id: string;
+    payment_id?: string | null;
+    order_id?: string | null;
+    severity: string;
+    detected_at?: string | null;
+    description: string;
+  }>;
+}
+
+export interface SimilarIncidentsResponse {
+  incident_id: string;
+  payment_id?: string | null;
+  fingerprint: Record<string, unknown>;
+  similar_incidents: SimilarIncidentItem[];
+  recurring_patterns: PatternSummaryItem[];
+  total_compared: number;
+  matches_found: number;
+}
+
 

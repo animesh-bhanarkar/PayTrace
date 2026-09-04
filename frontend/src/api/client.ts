@@ -253,4 +253,46 @@ export async function fetchClaimsSummary(params?: {
   return res.json();
 }
 
+// --- PHASE 5: ADVANCED INCIDENT INTELLIGENCE METHODS ---
+
+export async function fetchSimilarIncidents(
+  incidentIdOrPaymentId: string,
+  minSimilarity = 0.35,
+  limit = 10
+): Promise<import("../types").SimilarIncidentsResponse> {
+  const q = new URLSearchParams({
+    min_similarity: String(minSimilarity),
+    limit: String(limit),
+  });
+  const res = await fetch(
+    `${BASE_URL}/incidents/${encodeURIComponent(incidentIdOrPaymentId)}/similar?${q.toString()}`
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchRecurringPatterns(): Promise<import("../types").PatternSummaryItem[]> {
+  const res = await fetch(`${BASE_URL}/patterns`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchPatternDetail(
+  patternId: string
+): Promise<import("../types").PatternSummaryItem> {
+  const res = await fetch(`${BASE_URL}/patterns/${encodeURIComponent(patternId)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+
 

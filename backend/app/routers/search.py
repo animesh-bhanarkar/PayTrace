@@ -118,4 +118,37 @@ def search_global(
                 )
             )
 
+    # 3. Search Recurring Patterns
+    if not type_filter or type_filter.upper() in ["PATTERN", "PATTERNS"]:
+        try:
+            from app.routers.patterns import list_recurring_patterns
+            patterns = list_recurring_patterns(db=db)
+            q_lower = clean_query.lower()
+            for p in patterns:
+                if (
+                    q_lower in p.pattern_id.lower()
+                    or q_lower in p.pattern_name.lower()
+                    or q_lower in p.pattern_type.lower()
+                ):
+                    results.append(
+                        SearchResultItem(
+                            id=p.pattern_id,
+                            type="PATTERN",
+                            title=f"Pattern: {p.pattern_name}",
+                            subtitle=f"{p.incident_count} incidents • Strength: {p.pattern_strength}",
+                            payment_id=p.supporting_payment_ids[0] if p.supporting_payment_ids else None,
+                            order_id=None,
+                            timestamp=p.last_detected_at,
+                            severity=p.severity,
+                            badge=p.pattern_strength,
+                            details={
+                                "pattern_id": p.pattern_id,
+                                "incident_count": p.incident_count,
+                                "pattern_type": p.pattern_type,
+                            },
+                        )
+                    )
+        except Exception:
+            pass
+
     return results[:limit]

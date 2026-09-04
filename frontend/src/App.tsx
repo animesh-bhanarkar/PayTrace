@@ -13,6 +13,7 @@ import { EvidenceExplorer } from "./components/EvidenceExplorer";
 import { EvidenceDetailModal } from "./components/EvidenceDetailModal";
 import { ClaimVerificationCenter } from "./components/ClaimVerificationCenter";
 import { InvestigationHistoryView } from "./components/InvestigationHistoryView";
+import { PatternExplorer } from "./components/PatternExplorer";
 import {
   investigate,
   replayScenario,
@@ -206,6 +207,8 @@ function PayTraceApp() {
         return "System Overview & Investigation Dashboard";
       case "incidents":
         return "Payment Incidents Console";
+      case "patterns":
+        return "Recurring Incident Pattern Explorer";
       case "search":
         return "Global Evidence & Incident Search";
       case "timeline":
@@ -273,6 +276,7 @@ function PayTraceApp() {
               incidentMeta={selectedIncidentMeta || undefined}
               onBack={handleBackToIncidents}
               onSelectEvidence={(eid) => setSelectedEvidenceId(eid)}
+              onSelectPayment={(pid) => handleSelectIncident(pid)}
             />
           ) : selectedPaymentId && investigating ? (
             <div className="py-24 text-center space-y-3">
@@ -302,6 +306,9 @@ function PayTraceApp() {
               loadingScenarioId={activeLoadingScenario}
               loading={loadingData}
             />
+          ) : activeTab === "patterns" ? (
+            /* VIEW: Pattern Explorer */
+            <PatternExplorer onSelectPayment={handleSelectIncident} />
           ) : activeTab === "search" ? (
             /* VIEW: Global Search */
             <GlobalSearch onSelectIncident={handleSelectIncident} />

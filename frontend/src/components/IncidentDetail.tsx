@@ -6,6 +6,7 @@ import { ConfidenceGauge } from "./ConfidenceGauge";
 import { EvidenceClaimGraph } from "./EvidenceClaimGraph";
 import { InvestigationReportModal } from "./InvestigationReportModal";
 import { MissingEvidenceCard } from "./MissingEvidenceCard";
+import { SimilarIncidentsCard } from "./SimilarIncidentsCard";
 import {
   resolveIncident,
   reopenIncident,
@@ -38,6 +39,7 @@ interface IncidentDetailProps {
   };
   onBack: () => void;
   onSelectEvidence?: (evidenceId: string) => void;
+  onSelectPayment?: (paymentId: string) => void;
 }
 
 export const IncidentDetail: React.FC<IncidentDetailProps> = ({
@@ -45,6 +47,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
   incidentMeta,
   onBack,
   onSelectEvidence,
+  onSelectPayment,
 }) => {
   const [resolvedState, setResolvedState] = useState<boolean>(
     Boolean(incidentMeta?.resolved)
@@ -572,6 +575,12 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                 })}
               </div>
             </div>
+
+            {/* Section 4: Historical Intelligence & Similar Incidents (Phase 5) */}
+            <SimilarIncidentsCard
+              paymentId={paymentId}
+              onSelectPayment={onSelectPayment}
+            />
           </div>
         </div>
       )}
