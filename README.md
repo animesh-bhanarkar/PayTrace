@@ -162,6 +162,9 @@ During implementation, genuine engineering obstacles were encountered, investiga
 >
 > Real Gemini evaluation is available with `python scripts/run_benchmark.py --real-gemini` and has not been run in the results below.
 
+The automated benchmark validates deterministic pipeline correctness.
+Real Gemini B1 baseline requires a valid GEMINI_API_KEY and live API calls.
+
 **What is measured:** State machine correctness, incident detection, AI activation gate routing, claim verification (rejection of bad claims), confidence calibration, and abstention logic.
 
 **What is NOT measured:** Real Gemini output quality, evidence-citation accuracy, or unsupported-claim rate. These require `--real-gemini`.

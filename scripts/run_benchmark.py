@@ -563,6 +563,14 @@ def _print_table(
     modes: List[str],
 ) -> None:
     """Print a human-readable summary table with honest labels."""
+    print("=" * 60)
+    print("PayTrace Benchmark — Deterministic Pipeline Validation")
+    print("NOTE: LLM responses are stubbed. This benchmark measures")
+    print("state reconstruction, incident detection, claim verification,")
+    print("and confidence engine correctness only. It does NOT measure")
+    print("real Gemini AI accuracy (D-030 B1 baseline).")
+    print("Real Gemini B1 requires live API calls with GEMINI_API_KEY.")
+    print("=" * 60)
     print()
     print("=" * 90)
     print("PAYTRACE BENCHMARK  —  DETERMINISTIC PIPELINE VALIDATION")

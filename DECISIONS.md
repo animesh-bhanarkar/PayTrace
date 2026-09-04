@@ -974,6 +974,60 @@ Git history
 
 ---
 
+## D-041 — In-Process TestClient for Webhook Tests
+
+**Status:** APPROVED
+
+**Decision:**
+
+Migrate webhook endpoint tests from httpx network calls to FastAPI TestClient in-process execution.
+
+**Rationale:**
+
+Eliminates external server dependency. Identical coverage maintained for valid signature, tampered signature, and idempotency scenarios.
+
+**Date:**
+
+2026-09-04
+
+---
+
+## D-042 — API-Level Structured Output Enforcement for Gemini
+
+**Status:** APPROVED
+
+**Decision:**
+
+Replace prompt-level JSON instruction with response_schema via types.GenerateContentConfig in the google-genai SDK.
+
+**Rationale:**
+
+Aligns with PROJECT_CONTEXT.md §22. Eliminates fragile markdown-fence stripping. Verified live against real Gemini API on 2026-09-05 — schema conformance confirmed.
+
+**Date:**
+
+2026-09-04
+
+---
+
+## D-043 — Benchmark Scope: Deterministic Pipeline Only
+
+**Status:** APPROVED
+
+**Decision:**
+
+Automated benchmark stubs the LLM and measures deterministic pipeline correctness only. D-030 B1 real Gemini comparison requires live API calls and is not automated in the benchmark script.
+
+**Rationale:**
+
+Prevents quota exhaustion during repeated runs. Deterministic validation is independently reproducible without API access.
+
+**Date:**
+
+2026-09-04
+
+---
+
 # 13. CURRENT ARCHITECTURE DECISION SUMMARY
 
 The following decisions are currently frozen:
