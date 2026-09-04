@@ -4,6 +4,8 @@ import type {
   IncidentRecord,
   ScenarioFixtureItem,
   IncidentNoteItem,
+  SearchResultItem,
+  NormalizedEventItem,
 } from "../types";
 
 const BASE_URL = (
@@ -121,4 +123,41 @@ export async function createIncidentNote(
   }
   return res.json();
 }
+
+export async function searchGlobal(
+  query: string,
+  limit = 30,
+  typeFilter?: string
+): Promise<SearchResultItem[]> {
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  if (typeFilter && typeFilter !== "ALL") {
+    params.set("type_filter", typeFilter);
+  }
+  const res = await fetch(`${BASE_URL}/search?${params.toString()}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchGlobalTimeline(
+  limit = 50,
+  eventType?: string,
+  source?: string,
+  paymentId?: string
+): Promise<NormalizedEventItem[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (eventType && eventType !== "ALL") params.set("event_type", eventType);
+  if (source && source !== "ALL") params.set("source", source);
+  if (paymentId) params.set("payment_id", paymentId);
+
+  const res = await fetch(`${BASE_URL}/events/timeline?${params.toString()}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 

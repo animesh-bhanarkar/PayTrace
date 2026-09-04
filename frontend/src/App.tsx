@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { IncidentsExplorer } from "./components/IncidentsExplorer";
 import { IncidentDetail } from "./components/IncidentDetail";
+import { OverviewDashboard } from "./components/OverviewDashboard";
+import { GlobalSearch } from "./components/GlobalSearch";
+import { TimelineExplorer } from "./components/TimelineExplorer";
+import { IntegrationsView } from "./components/IntegrationsView";
+import { SettingsView } from "./components/SettingsView";
 import {
   investigate,
   replayScenario,
@@ -27,7 +32,7 @@ export default function App() {
 
 function PayTraceApp() {
   // Navigation & UI state
-  const [activeTab, setActiveTab] = useState<NavigationTab>("incidents");
+  const [activeTab, setActiveTab] = useState<NavigationTab>("overview");
   const [demoMode, setDemoMode] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -45,9 +50,6 @@ function PayTraceApp() {
 
   // Scenario Replay state
   const [activeLoadingScenario, setActiveLoadingScenario] = useState<string | null>(null);
-
-  // Search input state
-  const [searchPaymentId, setSearchPaymentId] = useState("");
 
   // Initial load
   useEffect(() => {
@@ -184,18 +186,35 @@ function PayTraceApp() {
     }
   };
 
-  // Direct search by Payment ID
-  const handleDirectSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = searchPaymentId.trim();
-    if (!clean) return;
-    handleSelectIncident(clean);
-  };
-
   const handleBackToIncidents = () => {
     setSelectedPaymentId(null);
     setInvestigationResult(null);
     setInvestigationError(null);
+  };
+
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case "overview":
+        return "System Overview & Investigation Dashboard";
+      case "incidents":
+        return "Payment Incidents Console";
+      case "search":
+        return "Global Evidence & Incident Search";
+      case "timeline":
+        return "Cross-Incident Timeline Explorer";
+      case "evidence":
+        return "Verified Evidence Repository";
+      case "investigations":
+        return "AI Investigations & Gate Audits";
+      case "reports":
+        return "Compliance Dossiers & Incident Reports";
+      case "integrations":
+        return "Payment Gateway & Webhook Integrations";
+      case "settings":
+        return "Engine Settings & Cryptographic Specifications";
+      default:
+        return "Payment Incident Investigation System";
+    }
   };
 
   return (
@@ -205,9 +224,8 @@ function PayTraceApp() {
         activeTab={activeTab}
         onSelectTab={(tab) => {
           setActiveTab(tab);
-          if (tab === "incidents") {
-            setSelectedPaymentId(null);
-          }
+          setSelectedPaymentId(null);
+          setInvestigationResult(null);
         }}
         demoMode={demoMode}
         onToggleDemoMode={() => setDemoMode((prev) => !prev)}
@@ -222,25 +240,7 @@ function PayTraceApp() {
           showBack={selectedPaymentId !== null}
           onBackToIncidents={handleBackToIncidents}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          title={
-            activeTab === "overview"
-              ? "System Overview & Telemetry"
-              : activeTab === "search"
-              ? "Global Evidence & Incident Search"
-              : activeTab === "timeline"
-              ? "Timeline Explorer & Cross-Session Latencies"
-              : activeTab === "evidence"
-              ? "Verified Evidence Repository"
-              : activeTab === "investigations"
-              ? "AI Investigations & Gate Audits"
-              : activeTab === "reports"
-              ? "Compliance & Incident Reports"
-              : activeTab === "integrations"
-              ? "Payment Gateway & Webhook Integrations"
-              : activeTab === "settings"
-              ? "Engine Settings & Cryptographic Secrets"
-              : "Payment Incidents Console"
-          }
+          title={getPageTitle()}
         />
 
         {/* Dynamic Main Body Content */}
@@ -267,11 +267,22 @@ function PayTraceApp() {
             />
           ) : selectedPaymentId && investigating ? (
             <div className="py-24 text-center space-y-3">
-              <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mx-auto"></div>
+              <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin mx-auto"></div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Reconstructing payment state & evaluating authoritative rules for {selectedPaymentId}...
               </p>
             </div>
+          ) : activeTab === "overview" ? (
+            /* VIEW: Overview Dashboard */
+            <OverviewDashboard
+              incidents={incidentsList}
+              scenarios={scenariosList}
+              onSelectIncident={handleSelectIncident}
+              onNavigateTab={(tab) => {
+                setActiveTab(tab);
+                setSelectedPaymentId(null);
+              }}
+            />
           ) : activeTab === "incidents" ? (
             /* VIEW: Incidents Explorer */
             <IncidentsExplorer
@@ -282,96 +293,79 @@ function PayTraceApp() {
               loadingScenarioId={activeLoadingScenario}
               loading={loadingData}
             />
-          ) : activeTab === "overview" ? (
-            /* VIEW: Overview */
-            <div className="space-y-6">
-              <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          ) : activeTab === "search" ? (
+            /* VIEW: Global Search */
+            <GlobalSearch onSelectIncident={handleSelectIncident} />
+          ) : activeTab === "timeline" ? (
+            /* VIEW: Timeline Explorer */
+            <TimelineExplorer onSelectIncident={handleSelectIncident} />
+          ) : activeTab === "evidence" ? (
+            /* VIEW: Evidence Repository */
+            <div className="space-y-4">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Investigate Live Payment ID
+                  Verified Evidence Repository
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Trigger state reconstruction, authoritative source rules, and evidence-bounded AI investigation.
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Inspect normalized payment evidence packages across all captured sessions.
                 </p>
-
-                <form onSubmit={handleDirectSearch} className="flex flex-col sm:flex-row gap-3 max-w-xl">
-                  <input
-                    type="text"
-                    placeholder="Enter payment_id (e.g. pay_live_001)"
-                    value={searchPaymentId}
-                    onChange={(e) => setSearchPaymentId(e.target.value)}
-                    className="flex-1 px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!searchPaymentId.trim()}
-                    className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium text-xs transition shadow-xs shrink-0"
-                  >
-                    Investigate →
-                  </button>
-                </form>
               </div>
-
-              {/* System Health Overview Card */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    PostgreSQL Connection
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">Connected</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    Latency: ~366ms (Render cluster)
-                  </p>
-                </div>
-
-                <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    Gemini AI Structured Output
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">API Enforced Schema</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    Model: gemini-3.6-flash
-                  </p>
-                </div>
-
-                <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    Webhook HMAC Security
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">Active & Verified</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    HMAC-SHA256 test mode secret
-                  </p>
-                </div>
+              <IncidentsExplorer
+                incidents={incidentsList}
+                scenarios={scenariosList}
+                onSelectIncident={handleSelectIncident}
+                onReplayScenario={handleReplayScenario}
+                loadingScenarioId={activeLoadingScenario}
+                loading={loadingData}
+              />
+            </div>
+          ) : activeTab === "investigations" ? (
+            /* VIEW: AI Investigations */
+            <div className="space-y-4">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  AI Investigations & Activation Audits
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Review Gemini AI root cause investigations and anti-hallucination claim audits.
+                </p>
               </div>
+              <IncidentsExplorer
+                incidents={incidentsList.filter((i) => i.ai_required || i.severity === "HIGH")}
+                scenarios={scenariosList.filter((s) => s.ground_truth.expected_ai_activated)}
+                onSelectIncident={handleSelectIncident}
+                onReplayScenario={handleReplayScenario}
+                loadingScenarioId={activeLoadingScenario}
+                loading={loadingData}
+              />
             </div>
-          ) : (
-            /* VIEW: Other Tabs (Search, Timeline, Evidence, etc.) */
-            <div className="p-8 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs text-center space-y-3">
-              <span className="text-2xl">⚡</span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white capitalize">
-                {activeTab.replace("_", " ")} Explorer
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Access all deterministic evidence records, state machine audits, and cross-session payment reconciliations in the Incidents Explorer.
-              </p>
-              <button
-                type="button"
-                onClick={() => setActiveTab("incidents")}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition"
-              >
-                Go to Incidents Explorer →
-              </button>
+          ) : activeTab === "reports" ? (
+            /* VIEW: Reports */
+            <div className="space-y-4">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Compliance Dossiers & Incident Reports
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Generate formal, print-ready PDF and JSON audit dossiers for resolved and open payment incidents.
+                </p>
+              </div>
+              <IncidentsExplorer
+                incidents={incidentsList}
+                scenarios={scenariosList}
+                onSelectIncident={handleSelectIncident}
+                onReplayScenario={handleReplayScenario}
+                loadingScenarioId={activeLoadingScenario}
+                loading={loadingData}
+              />
             </div>
-          )}
+          ) : activeTab === "integrations" ? (
+            /* VIEW: Integrations */
+            <IntegrationsView />
+          ) : activeTab === "settings" ? (
+            /* VIEW: Settings */
+            <SettingsView />
+          ) : null}
         </main>
       </div>
     </div>

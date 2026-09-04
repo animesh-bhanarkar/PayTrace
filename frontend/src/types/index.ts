@@ -53,15 +53,21 @@ export interface InvestigationResult {
 }
 
 export interface NormalizedEventItem {
+  id?: string;
   evidence_id?: string;
   event_id?: string;
   event_type: string;
+  payment_id?: string | null;
+  order_id?: string | null;
   event_timestamp: string;
   ingestion_timestamp?: string | null;
   source?: string;
+  status?: string;
+  delivery_status?: string | null;
   signature_valid?: boolean;
-  payload_hash?: string;
-  delay_seconds?: number;
+  payload_hash?: string | null;
+  delay_seconds?: number | null;
+  raw_payload?: Record<string, unknown> | null;
   [key: string]: unknown;
 }
 
@@ -123,6 +129,25 @@ export interface ScenarioResult {
   actual: ScenarioActual;
   passed: boolean;
   mismatches: string[];
+}
+
+export interface SearchResultItem {
+  id: string;
+  type: "INCIDENT" | "EVENT" | "EVIDENCE" | string;
+  title: string;
+  subtitle: string;
+  payment_id?: string | null;
+  order_id?: string | null;
+  timestamp?: string | null;
+  severity?: string | null;
+  badge?: string | null;
+  details?: Record<string, unknown>;
+}
+
+export interface TimelineFilterState {
+  eventType?: string;
+  source?: string;
+  searchQuery?: string;
 }
 
 export type NavigationTab =
