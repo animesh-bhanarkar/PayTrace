@@ -65,8 +65,16 @@ export interface NormalizedEventItem {
   [key: string]: unknown;
 }
 
+export interface IncidentNoteItem {
+  id: string;
+  payment_id: string;
+  note_text: string;
+  author: string;
+  created_at: string;
+}
+
 export interface IncidentRecord {
-  id: number;
+  id: number | string;
   incident_type: string;
   payment_id: string | null;
   order_id: string | null;
@@ -74,6 +82,8 @@ export interface IncidentRecord {
   severity: "HIGH" | "MEDIUM" | "LOW" | string;
   evidence_ids: string[];
   resolved: boolean;
+  resolution_notes?: string | null;
+  resolved_at?: string | null;
   created_at: string | null;
   // Computed / UI fields
   state?: string;

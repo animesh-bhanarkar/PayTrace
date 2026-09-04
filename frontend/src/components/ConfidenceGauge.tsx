@@ -5,36 +5,24 @@ interface ConfidenceGaugeProps {
   confidence: ConfidenceResult;
   reconstructedState?: string;
   incidentsCount?: number;
+  totalEventsCount?: number;
+  verifiedClaimsCount?: number;
+  totalClaimsCount?: number;
 }
 
 export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({
   confidence,
   reconstructedState,
   incidentsCount = 0,
+  totalEventsCount = 0,
+  verifiedClaimsCount = 0,
+  totalClaimsCount = 0,
 }) => {
   const level = confidence.level;
   const isAbstained = confidence.abstain;
 
-  // Calculate qualitative percentage representation based on deterministic score
-  let scorePct = 100;
-  if (level === "HIGH") {
-    scorePct = Math.round(confidence.score > 0 ? confidence.score * 100 : 92);
-  } else if (level === "MEDIUM") {
-    scorePct = Math.round(confidence.score > 0 ? confidence.score * 100 : 70);
-  } else if (level === "LOW") {
-    scorePct = Math.round(confidence.score > 0 ? confidence.score * 100 : 40);
-  } else {
-    // INCONCLUSIVE
-    scorePct = Math.round(confidence.score > 0 ? confidence.score * 100 : 62);
-  }
-
-  // Derive sub-factor scores based on actual evidence properties
-  const factors = confidence.factors || {
-    source_consistency: level === "HIGH" ? 95 : level === "MEDIUM" ? 75 : 65,
-    evidence_completeness: incidentsCount > 0 ? (level === "HIGH" ? 85 : 50) : 95,
-    contradiction_impact: incidentsCount > 1 ? 40 : level === "HIGH" ? 90 : 70,
-    recency: reconstructedState ? 80 : 60,
-  };
+  // Use the authoritative calibrated score (0.0 to 1.0)
+  const scorePct = Math.round((confidence.score || 0) * 100);
 
   // SVG Gauge calculations (radius = 38, circumference ≈ 238.76)
   const radius = 38;
@@ -42,26 +30,35 @@ export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({
   const strokeDashoffset = circumference - (scorePct / 100) * circumference;
 
   let strokeColor = "#3B82F6"; // Blue default
-  let badgeBg = "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+  let badgeBg = "bg-blue-500/10 text-blue-400 border-blue-500/20";
   if (level === "HIGH") {
     strokeColor = "#10B981"; // Emerald
-    badgeBg = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+    badgeBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
   } else if (level === "MEDIUM") {
     strokeColor = "#F59E0B"; // Amber
-    badgeBg = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
+    badgeBg = "bg-amber-500/10 text-amber-400 border-amber-500/20";
   } else if (level === "LOW" || isAbstained || level === "INCONCLUSIVE") {
-    strokeColor = "#F59E0B"; // Amber warning
-    badgeBg = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
+    strokeColor = "#F43F5E"; // Rose / Guarded
+    badgeBg = "bg-rose-500/10 text-rose-400 border-rose-500/20";
   }
+
+  // Calculate grounded claim verification rate
+  const claimSupportRate =
+    totalClaimsCount > 0
+      ? Math.round((verifiedClaimsCount / totalClaimsCount) * 100)
+      : 100;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Confidence Breakdown
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Confidence & Verification Calibration
         </h4>
-        <span className="text-xs font-mono text-slate-400 cursor-pointer" title="Deterministic calibration metric">
-          ⓘ
+        <span
+          className="text-xs font-mono text-slate-500 cursor-help"
+          title="Deterministic scoring based on anomaly count, citation validity, and sequence integrity"
+        >
+          {level}
         </span>
       </div>
 
@@ -73,7 +70,7 @@ export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({
               cx="48"
               cy="48"
               r={radius}
-              className="stroke-slate-200 dark:stroke-slate-800"
+              className="stroke-slate-800"
               strokeWidth="7"
               fill="transparent"
             />
@@ -91,54 +88,74 @@ export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({
             />
           </svg>
           <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className="text-lg font-bold text-slate-900 dark:text-white leading-none">
+            <span className="text-lg font-bold text-slate-100 leading-none font-mono">
               {scorePct}%
             </span>
-            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-              Overall
+            <span className="text-[10px] font-medium text-slate-400 mt-0.5">
+              Score
             </span>
           </div>
         </div>
 
-        {/* Sub-factor Bars */}
+        {/* Deterministic Verification Properties */}
         <div className="flex-1 space-y-2 text-xs">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Source consistency
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  incidentsCount === 0 ? "bg-emerald-500" : "bg-amber-500"
+                }`}
+              ></span>
+              Anomaly Penalty
             </span>
-            <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-              {factors.source_consistency}%
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-              Evidence completeness
-            </span>
-            <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-              {factors.evidence_completeness}%
+            <span className="font-semibold text-slate-200 font-mono">
+              {incidentsCount === 0 ? "None (Clean)" : `-${incidentsCount * 15}% (${incidentsCount} flagged)`}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-              Contradiction impact
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  totalEventsCount > 0 ? "bg-emerald-500" : "bg-amber-500"
+                }`}
+              ></span>
+              Evidence Volume
             </span>
-            <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-              {factors.contradiction_impact}%
+            <span className="font-semibold text-slate-200 font-mono">
+              {totalEventsCount} {totalEventsCount === 1 ? "event" : "events"}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-              Recency
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  claimSupportRate === 100
+                    ? "bg-emerald-500"
+                    : claimSupportRate > 0
+                    ? "bg-amber-500"
+                    : "bg-rose-500"
+                }`}
+              ></span>
+              Claim Support Rate
             </span>
-            <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono">
-              {factors.recency}%
+            <span className="font-semibold text-slate-200 font-mono">
+              {totalClaimsCount > 0 ? `${claimSupportRate}% (${verifiedClaimsCount}/${totalClaimsCount})` : "N/A (Deterministic)"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  reconstructedState ? "bg-indigo-400" : "bg-slate-600"
+                }`}
+              ></span>
+              Reconstructed State
+            </span>
+            <span className="font-semibold text-indigo-300 font-mono uppercase">
+              {reconstructedState || "UNKNOWN"}
             </span>
           </div>
         </div>
@@ -151,13 +168,19 @@ export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({
           {confidence.reason ? (
             <span>{confidence.reason}</span>
           ) : isAbstained ? (
-            <span>Confidence is guarded due to anomaly presence. Abstention active to prevent speculative diagnosis.</span>
+            <span>
+              Confidence is guarded due to anomaly presence. Abstention active to prevent speculative diagnosis.
+            </span>
           ) : (
-            <span>Deterministic evidence verified with high confidence. Payment facts successfully grounded.</span>
+            <span>
+              Deterministic evidence verified with high confidence. Payment facts successfully grounded.
+            </span>
           )}
         </div>
       </div>
     </div>
   );
 };
+
 export default ConfidenceGauge;
+

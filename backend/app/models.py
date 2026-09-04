@@ -215,3 +215,26 @@ class AuditRecord(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+
+class IncidentNote(Base):
+    """
+    Human investigator annotations for a payment incident.
+    Clearly distinguished from deterministic evidence and AI claims.
+    """
+    __tablename__ = "incident_notes"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    payment_id = Column(String(255), nullable=False, index=True)
+    author = Column(String(255), nullable=False, default="Developer")
+    note_text = Column(String(2048), nullable=False)
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )

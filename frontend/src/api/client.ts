@@ -3,6 +3,7 @@ import type {
   ScenarioResult,
   IncidentRecord,
   ScenarioFixtureItem,
+  IncidentNoteItem,
 } from "../types";
 
 const BASE_URL = (
@@ -65,3 +66,59 @@ export async function fetchHealth(): Promise<Record<string, unknown> | null> {
     return null;
   }
 }
+
+export async function resolveIncident(
+  paymentId: string,
+  resolutionNotes = "Resolved via investigator console"
+): Promise<IncidentRecord> {
+  const res = await fetch(`${BASE_URL}/incidents/${paymentId}/resolve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ resolution_notes: resolutionNotes }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function reopenIncident(paymentId: string): Promise<IncidentRecord> {
+  const res = await fetch(`${BASE_URL}/incidents/${paymentId}/reopen`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchIncidentNotes(paymentId: string): Promise<IncidentNoteItem[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/incidents/${paymentId}/notes`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function createIncidentNote(
+  paymentId: string,
+  noteText: string,
+  author = "Human Investigator"
+): Promise<IncidentNoteItem> {
+  const res = await fetch(`${BASE_URL}/incidents/${paymentId}/notes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ note_text: noteText, author }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
