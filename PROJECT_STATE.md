@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Day 2, Step 1 — Event Normalization Models Implemented & Verified
-**Updated by:** Antigravity — NormalizedEvent & PaymentState models created, Supabase schema applied, live pytest passed
+**Last updated:** Day 5 Complete — Scenario Replay & Frontend Dashboard Implemented & Verified
+**Updated by:** Antigravity — Scenario replay engine, frontend dashboard, demo scenarios mode, 4 pytest tests passing, npm run build zero errors
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -16,7 +16,7 @@
 
 # 1. CURRENT PHASE
 
-**Day 3 — AI Integration Complete**
+**Day 5 Complete — Scenario Replay & Frontend Dashboard Verified**
 
 The PayTrace product and architecture are frozen and approved in:
 
@@ -200,12 +200,21 @@ It must not be used to override the frozen architecture without the required rev
 * [x] Day 3: Gemini Investigator created (`investigate`) with structured JSON schema output
 * [x] Day 3: `/investigations/investigate` endpoint added and registered
 * [x] Day 3: 10 unit tests for activation gate and evidence package all passed
+* [x] Day 4: Claim Verifier created (`verify_claims`) with deterministic verification against evidence package
+* [x] Day 4: Confidence Engine created (`compute_confidence`) with deterministic scoring and abstention
+* [x] Day 4: Audit Trail created (`AuditRecord` model + `build_audit_entry`)
+* [x] Day 4: 10 unit tests for claim verifier and confidence engine all passed
+* [x] Day 5: Scenario Replay Foundation created (`scenarios.py` + `POST /scenarios/replay`) with in-memory pipeline
+* [x] Day 5: 3 scenario fixtures (`scenario_01_clean_capture.json`, `scenario_02_missing_created.json`, `scenario_03_duplicate_webhook.json`) and 4 passing pytest tests (`test_scenario_replay.py`)
+* [x] Day 5: Frontend Dashboard implemented with two tabs: "Investigate" and "Demo Scenarios"
+* [x] Day 5: Frontend components created (`ConfidenceBadge`, `IncidentBadge`, `EventTimeline`, `ClaimsPanel`)
+* [x] Day 5: Full production build (`npm run build`) passing with zero TypeScript errors
 
 ---
 
 # 5. IN PROGRESS
 
-Day 3 complete — next step is frontend dashboard to consume the `/investigations/investigate` endpoint.
+Day 5 complete — Ready for final deployment verification & demo recording.
 
 ---
 
@@ -223,7 +232,7 @@ None.
 
 # 8. LAST COMPLETED TASK
 
-Day 3: AI Activation Gate, Evidence Package Builder, and Gemini Investigator implemented. `/investigations/investigate` endpoint created to orchestrate investigation flow. 10 tests passed. Manual test verified full pipeline successfully generates evidence package and invokes Gemini (handling unavailable model gracefully).
+Day 5: Backend scenario replay engine and frontend dashboard with live investigation and demo scenarios mode. 4 pytest tests passing, `npm run build` compiled cleanly with zero errors.
 
 ---
 

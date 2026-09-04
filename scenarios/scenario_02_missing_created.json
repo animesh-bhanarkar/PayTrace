@@ -1,0 +1,19 @@
+{
+  "scenario_id": "scenario_02",
+  "name": "Missing payment.created — Invalid Transition",
+  "description": "payment.authorized arrives with no prior payment.created. Invalid transition detected.",
+  "ground_truth": {
+    "expected_state": "unknown",
+    "expected_incidents": ["invalid_transition"],
+    "expected_ai_activated": true,
+    "expected_confidence": "LOW",
+    "expected_abstain": false
+  },
+  "events": [
+    {
+      "id": "evt_s02_001", "event": "payment.authorized",
+      "created_at": 1700000060,
+      "payload": {"payment": {"entity": {"id": "pay_s02", "order_id": "order_s02", "status": "authorized"}}}
+    }
+  ]
+}

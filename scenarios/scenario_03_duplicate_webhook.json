@@ -1,0 +1,34 @@
+{
+  "scenario_id": "scenario_03",
+  "name": "Duplicate Webhook",
+  "description": "Same payment.captured event delivered twice. Duplicate detected, no AI needed.",
+  "ground_truth": {
+    "expected_state": "captured",
+    "expected_incidents": ["duplicate_webhook"],
+    "expected_ai_activated": false,
+    "expected_confidence": "HIGH",
+    "expected_abstain": false
+  },
+  "events": [
+    {
+      "id": "evt_s03_001", "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {"payment": {"entity": {"id": "pay_s03", "order_id": "order_s03", "status": "created"}}}
+    },
+    {
+      "id": "evt_s03_002", "event": "payment.authorized",
+      "created_at": 1700000060,
+      "payload": {"payment": {"entity": {"id": "pay_s03", "order_id": "order_s03", "status": "authorized"}}}
+    },
+    {
+      "id": "evt_s03_003", "event": "payment.captured",
+      "created_at": 1700000120,
+      "payload": {"payment": {"entity": {"id": "pay_s03", "order_id": "order_s03", "status": "captured"}}}
+    },
+    {
+      "id": "evt_s03_003", "event": "payment.captured",
+      "created_at": 1700000120,
+      "payload": {"payment": {"entity": {"id": "pay_s03", "order_id": "order_s03", "status": "captured"}}}
+    }
+  ]
+}
