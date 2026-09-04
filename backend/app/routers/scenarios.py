@@ -162,11 +162,9 @@ def replay_scenario(request: ScenarioReplayRequest) -> Dict[str, Any]:
         ai_activated,
     )
 
-    high_incidents = [i for i in all_incidents if i.severity == "HIGH"]
     if (
         not ai_activated
         and authoritative_result.get("confidence_hint") == "HIGH"
-        and len(high_incidents) == 0
     ):
         confidence_level: str = "HIGH"
         abstained: bool = False

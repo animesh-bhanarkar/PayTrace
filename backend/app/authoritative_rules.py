@@ -17,6 +17,7 @@ from app.incident_detector import (
     IncidentReport,
     INVALID_TRANSITION,
     AMBIGUOUS_STATE,
+    DUPLICATE_WEBHOOK,
 )
 
 # Incident types that always demand AI investigation regardless of severity
@@ -51,17 +52,20 @@ def apply_authoritative_rules(
     ai_trigger_types = [i for i in incidents if i.incident_type in _AI_TRIGGER_TYPES]
 
     incident_type_names = [i.incident_type for i in incidents]
+    
+    high_incidents_for_ai = [i for i in high_incidents if i.incident_type != DUPLICATE_WEBHOOK]
+    all_duplicate = bool(incidents) and all(i.incident_type == DUPLICATE_WEBHOOK for i in incidents)
 
     # ── Determine requires_ai_investigation ────────────────────────────────
-    requires_ai = bool(high_incidents) or bool(ai_trigger_types)
+    requires_ai = bool(high_incidents_for_ai) or bool(ai_trigger_types)
 
     # ── Determine confidence_hint ──────────────────────────────────────────
-    if not incidents:
+    if not incidents or all_duplicate:
         confidence_hint = "HIGH"
-    elif high_incidents:
+    elif high_incidents_for_ai:
         confidence_hint = "LOW"
     else:
-        # Only LOW / MEDIUM incidents present
+        # Only LOW / MEDIUM incidents present, or high severity incidents that don't trigger AI
         confidence_hint = "MEDIUM"
 
     # ── Build human-readable reason ────────────────────────────────────────

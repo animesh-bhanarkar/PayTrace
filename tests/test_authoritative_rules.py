@@ -94,3 +94,9 @@ def test_reason_names_incident_types():
     reason = result["reason"]
     assert "duplicate_webhook" in reason
     assert "delayed_webhook" in reason
+
+def test_duplicate_webhook_alone_does_not_require_ai():
+    incidents = [_make_incident(DUPLICATE_WEBHOOK, "HIGH")]
+    result = apply_authoritative_rules(_make_state(), incidents)
+    assert result["requires_ai_investigation"] is False
+    assert result["confidence_hint"] == "HIGH"
