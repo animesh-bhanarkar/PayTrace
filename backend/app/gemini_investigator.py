@@ -1,12 +1,13 @@
 import json
 import os
-import google.generativeai as genai
+from google import genai
 from typing import Dict, Any
 
-# Assuming GEMINI_API_KEY is in the environment
-api_key = os.getenv("GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
+# Configure client using new SDK
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+
+MODEL_NAME = "gemini-3.6-flash"
 
 SYSTEM_PROMPT = """
 You are a payment incident investigator for Razorpay integrations.
@@ -38,28 +39,34 @@ Rules you must follow:
 """
 
 def investigate(evidence_package: Dict[str, Any]) -> Dict[str, Any]:
+    if client is None:
+        return {"error": "gemini_unavailable", "detail": "GEMINI_API_KEY not set"}
+
     try:
-        model = genai.GenerativeModel(
-            model_name="gemini-3.6-flash",
-            system_instruction=SYSTEM_PROMPT
+        user_message = (
+            f"{SYSTEM_PROMPT}\n\n"
+            f"Investigate this payment incident:\n{json.dumps(evidence_package, indent=2)}"
         )
-        
-        user_message = f"Investigate this payment incident:\n{json.dumps(evidence_package, indent=2)}"
-        
-        response = model.generate_content(
-            user_message,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.1,
-                response_mime_type="application/json"
-            )
+
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=user_message,
+            config={"temperature": 0.1}
         )
-        
+
         response_text = response.text
+        # Strip markdown fences if present
+        stripped = response_text.strip()
+        if stripped.startswith("```"):
+            lines = stripped.splitlines()
+            # remove first and last fence lines
+            stripped = "\n".join(lines[1:-1]) if lines[-1].strip() == "```" else "\n".join(lines[1:])
+
         try:
-            parsed = json.loads(response_text)
+            parsed = json.loads(stripped)
             return parsed
         except json.JSONDecodeError:
             return {"error": "structured_output_failure", "raw": response_text}
-            
+
     except Exception as e:
         return {"error": "gemini_unavailable", "detail": str(e)}
