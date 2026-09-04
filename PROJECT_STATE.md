@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Day 6 Complete — Submission Ready
-**Updated by:** Antigravity — Gemini SDK migration (google-genai), README, secret scan, final hardening. 49 tests passing.
+**Last updated:** Day 6 Complete — Submission Ready (+ post-submission bug fix, 2026-09-04)
+**Updated by:** Antigravity — Gemini SDK migration (google-genai), README, secret scan, final hardening. Bug fix: duplicate_webhook AI-trigger logic. 50 tests passing.
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -240,6 +240,22 @@ None.
 # 8. LAST COMPLETED TASK
 
 Day 6: README created, Gemini SDK migrated to google-genai, secret scan passed clean, 49 tests passing, final commit `fef0a2a` pushed. Phase = "Day 6 Complete — Submission Ready".
+
+Post Day 6 (2026-09-04): Live scenario replay verification found a real logic bug — Scenario 03 (Duplicate Webhook) returned `passed=false` on live Render infrastructure. Bug fixed in `authoritative_rules.py` (commit `4d27be9`). 50 tests passing.
+
+---
+
+# 8a. KNOWN BUGS FIXED
+
+## Bug: Duplicate Webhook incorrectly triggered AI investigation
+
+- **Found:** 2026-09-04, via live scenario replay verification on Render
+- **Symptom:** `POST /scenarios/replay {"scenario_id": "scenario_03"}` returned `passed=false`, `ai_activated=true`, `confidence=LOW`. Ground truth expected `ai_activated=false`, `confidence=HIGH`.
+- **Root cause:** `authoritative_rules.py` set `requires_ai_investigation=True` for any incident with `severity=HIGH`. `DUPLICATE_WEBHOOK` is classified `severity=HIGH` (correctly, for incident logging purposes), so a lone duplicate webhook was incorrectly forcing AI activation.
+- **Fix:** `authoritative_rules.py` now computes `requires_ai_investigation` using only non-`DUPLICATE_WEBHOOK` HIGH-severity incidents. If all incidents are `DUPLICATE_WEBHOOK`, `confidence_hint` is forced to `HIGH` and AI is not activated. `scenarios.py` confidence override simplified to rely solely on `confidence_hint` (removed the stale `len(high_incidents)==0` guard).
+- **Regression test added:** `test_duplicate_webhook_alone_does_not_require_ai` in `tests/test_authoritative_rules.py`
+- **Commit:** `4d27be9 fix: duplicate webhook alone must not trigger AI investigation`
+- **Result:** 50 tests pass. Live Scenario 03 returns `passed=true` after Render redeploy.
 
 ---
 

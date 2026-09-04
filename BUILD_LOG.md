@@ -591,4 +591,92 @@ When webhook integration tests pass locally but fail in production with real ext
 
 ---
 
+## 2026-09-04 — Duplicate Webhook incorrectly triggering AI investigation (found via live verification)
+
+### Status: Resolved
+
+### Discovery
+
+During live deployment verification after Render redeployed commit `8ae3829`, a POST to
+`https://paytrace-backend-ys0y.onrender.com/scenarios/replay` with `{"scenario_id": "scenario_03"}`
+returned:
+
+```json
+{
+  "passed": false,
+  "mismatches": [
+    "ai_activated mismatch: expected False, got True",
+    "confidence mismatch: expected HIGH, got LOW"
+  ]
+}
+```
+
+Scenario 03 represents a duplicate webhook — the same `payment.captured` event delivered twice.
+Ground truth states this should require no AI investigation (`ai_activated=false`, `confidence=HIGH`),
+since duplicate detection is fully deterministic.
+
+### Root Cause
+
+`backend/app/authoritative_rules.py` computed `requires_ai_investigation=True` whenever any incident
+had `severity=HIGH`. The `DUPLICATE_WEBHOOK` incident type is correctly classified `severity=HIGH`
+(for logging and display), so a lone duplicate webhook was incorrectly forcing AI activation.
+
+The `ai_activation_gate.py` does have a short-circuit check (`all incidents == DUPLICATE_WEBHOOK →
+return False`) but it is only reached if `authoritative_result["requires_ai_investigation"]` is
+False. Since `authoritative_rules` was setting it to True, the gate's duplicate check was never
+evaluated.
+
+Additionally, `scenarios.py` had a confidence override guarded by `len(high_incidents) == 0` —
+meaning even after fixing `authoritative_rules`, the override would not fire because
+`DUPLICATE_WEBHOOK` is HIGH-severity. That guard was removed.
+
+### Fix
+
+Two files changed:
+
+1. **`backend/app/authoritative_rules.py`**: Imported `DUPLICATE_WEBHOOK`. Computed
+   `requires_ai_investigation` using only non-`DUPLICATE_WEBHOOK` HIGH-severity incidents
+   (`high_incidents_for_ai`). When all incidents are `DUPLICATE_WEBHOOK`, `confidence_hint`
+   is forced to `"HIGH"`.
+
+2. **`backend/app/routers/scenarios.py`**: Removed the `len(high_incidents) == 0` guard from
+   the confidence override. The override now fires purely on `confidence_hint == "HIGH"` when
+   `ai_activated=False`.
+
+`incident_detector.py` and `ai_activation_gate.py` were not touched — `DUPLICATE_WEBHOOK`
+retains its `HIGH` severity label.
+
+### Test
+
+Added regression test `test_duplicate_webhook_alone_does_not_require_ai` to
+`tests/test_authoritative_rules.py`. Full suite: **50 tests pass** (was 49 before this fix).
+
+### Result
+
+Local: `POST http://127.0.0.1:8000/scenarios/replay {"scenario_id": "scenario_03"}` →
+`passed=true`, `ai_activated=false`, `confidence=HIGH`, `mismatches=[]`.
+
+Live (post Render redeploy of `4d27be9`): confirmed `passed=true` on Render.
+
+### Engineering Lesson
+
+Incident severity labels serve dual purposes: incident logging/display and AI routing. When a new
+AI routing rule is introduced (e.g., "HIGH severity → AI needed"), it must explicitly carve out
+incident types that are deterministic by design (e.g., duplicate webhooks). Relying on a
+downstream gate to short-circuit is fragile if upstream flags conflict. The fix centralises
+the routing decision in `authoritative_rules.py` where severity is already evaluated, rather
+than depending on two-layer short-circuit logic.
+
+### Related Files / Components
+
+- `backend/app/authoritative_rules.py`
+- `backend/app/routers/scenarios.py`
+- `tests/test_authoritative_rules.py`
+
+### Commit
+
+`4d27be9 fix: duplicate webhook alone must not trigger AI investigation`
+
+---
+
 # END OF BUILD_LOG.md
