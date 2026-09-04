@@ -1,95 +1,155 @@
 # PayTrace
 
-AI-assisted payment incident investigator for Razorpay integrations, built for the Razorpay AI Buildathon 2026.
+> **Evidence-grounded payment incident investigation system for Razorpay integrations.**
 
-## What it does
+PayTrace reconstructs confusing payment incidents from verified webhook events, uses AI only when necessary to interpret ambiguity, verifies AI claims against concrete evidence, and abstains when evidence is insufficient. **Deterministic systems establish payment facts. AI interprets ambiguity. Deterministic verification controls what AI is allowed to claim. The system knows when to abstain. AI never becomes the source of truth for payment state and never executes financial actions.**
 
-PayTrace receives Razorpay webhooks, deterministically reconstructs the payment state machine from raw events, and detects anomalies (duplicate webhooks, out-of-order events, invalid transitions, delayed delivery) without any LLM involvement. When the deterministic layer flags high-severity incidents, a gated AI investigator calls Gemini to form an evidence-backed hypothesis, which is then checked claim-by-claim against the original evidence package. If the evidence is insufficient to support a conclusion, the system returns INCONCLUSIVE rather than guessing.
+---
+
+## Live Deployments
+
+* **Frontend Dashboard (Vercel):** [https://pay-trace-nine.vercel.app](https://pay-trace-nine.vercel.app)
+* **Backend API (Render):** [https://paytrace-backend-ys0y.onrender.com](https://paytrace-backend-ys0y.onrender.com)
+* **API Health Check:** [https://paytrace-backend-ys0y.onrender.com/health](https://paytrace-backend-ys0y.onrender.com/health)
+
+---
 
 ## Architecture
 
-```
-Vercel (React Frontend)
-  ↓ HTTPS + CORS
+```text
+Vercel (React + TypeScript + Tailwind CSS)
+   │
+   ▼ HTTPS + CORS
 Render (FastAPI Backend)
-  ↓ SQLAlchemy
-Supabase PostgreSQL
+   │
+   ▼ SQLAlchemy
+Supabase PostgreSQL (Persistence Layer)
 
-External: Gemini API, Razorpay Test Mode
+External Services:
+├── Google Gemini API (gemini-3.6-flash via google-genai SDK)
+└── Razorpay Test Mode (HMAC-SHA256 Signature Verification)
 ```
 
-## Core Pipeline
+---
 
+## Core Investigation Pipeline
+
+```text
+Razorpay Webhook Event
+       │
+       ▼
+HMAC-SHA256 Signature Verification
+       │
+       ▼
+Event Normalization & PostgreSQL Persistence
+       │
+       ▼
+Deterministic State Reconstruction
+       │
+       ▼
+Incident Detection & Authoritative Source Rules
+       │
+       ▼
+AI Activation Gate
+ ├── Simple / Deterministic Anomaly (AI Skipped) ──► Direct Resolution (HIGH Confidence)
+ └── Ambiguous / Complex Incident (AI Activated)
+       │
+       ▼
+Structured Evidence Package
+       │
+       ▼
+Gemini Investigation Layer (Structured Output)
+       │
+       ▼
+Deterministic Claim Verifier (Checks Cited Evidence IDs)
+       │
+       ▼
+Confidence Engine (Calculates Confidence / Abstains with INCONCLUSIVE)
+       │
+       ▼
+Audit Trail Persistence
 ```
-Webhook → Signature Verification → Event Normalization
-→ State Reconstruction → Incident Detection → AI Activation Gate
-→ Evidence Package → Gemini Investigator → Claim Verifier
-→ Confidence Engine → Diagnosis / INCONCLUSIVE
-```
 
-## Demo
+---
 
-Live URL: https://pay-trace-nine.vercel.app
+## Demo Scenarios & Interactive Dashboard
 
-### Demo Scenarios (no setup required)
+The live frontend provides an interactive dashboard with zero setup required:
 
-1. **Scenario 1: Clean Capture** — deterministic HIGH confidence, AI skipped
-2. **Scenario 2: Missing payment.created** — AI activated, LOW confidence
-3. **Scenario 3: Duplicate Webhook** — deterministic, AI skipped
+### 1. Scenario Replay Mode ([Demo Scenarios Tab](https://pay-trace-nine.vercel.app))
+* **Scenario 1: Clean Capture**
+  * *Events:* Standard `payment.authorized` followed by `payment.captured`.
+  * *Behavior:* Deterministic state machine reaches `captured` with 0 incidents. AI is skipped. Confidence is **HIGH**.
+* **Scenario 2: Missing `payment.created` (Invalid Transition)**
+  * *Events:* `payment.authorized` arrives with no prior `payment.created` event.
+  * *Behavior:* Detects `invalid_transition`. Authoritative rules flag ambiguity; AI Activation Gate triggers Gemini investigation. Generated hypotheses and claims are verified against cited event IDs. Confidence is **LOW** / evidence-grounded.
+* **Scenario 3: Duplicate Webhook (Deduplication)**
+  * *Events:* Identical `payment.captured` webhook delivered twice.
+  * *Behavior:* Detects `duplicate_webhook`. Authoritative rules recognize deterministic deduplication, bypassing AI invocation. State reaches `captured` with **HIGH** confidence.
 
-### Live Investigation
+### 2. Live Investigation ([Investigate Tab](https://pay-trace-nine.vercel.app))
+Enter any known `payment_id` to inspect reconstructed state transitions, detected anomalies, evidence packages, verified claims, confidence scoring, and full audit trail records.
 
-Enter any payment_id from Razorpay Test Mode into the Investigate tab.
+---
 
-## Safety Design
+## Safety & Non-Negotiable Boundaries
 
-- **AI Activation Gate**: deterministic, AI never decides if AI runs
-- **Claim Verifier**: every AI claim checked against evidence package
-- **Abstention**: INCONCLUSIVE returned when evidence is insufficient
-- **No autonomous financial actions**
+* **Deterministic AI Gate:** AI never decides whether AI should run. Activation is governed strictly by deterministic code rules.
+* **Deterministic Claim Verifier:** Every claim generated by Gemini must cite valid evidence IDs present in the evidence package. Unsupported claims are flagged as `REJECTED`.
+* **Explicit Abstention:** If cited claims fail verification or critical evidence is missing, the system returns `INCONCLUSIVE` (`abstain: true`) rather than guessing.
+* **No Autonomous Financial Actions:** PayTrace is purely diagnostic. It cannot capture, refund, or retry payments.
+* **No Leaked Secrets:** Secrets and webhook keys are managed strictly via environment variables and never logged or committed.
 
-## Evaluation
+---
 
-Three scenarios with known ground truth.
-Metrics: state accuracy, incident detection, AI activation correctness,
-claim verification, confidence correctness, abstention correctness.
-
-## Local Development
+## Local Development & Testing
 
 ### Prerequisites
+* Python 3.11+
+* Node.js 18+
 
-Python 3.11+, Node.js 18+
-
-### Backend
-
+### 1. Backend Setup
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env  # fill in secrets
+cp .env.example .env  # configure DATABASE_URL, GEMINI_API_KEY, RAZORPAY_WEBHOOK_SECRET
 uvicorn app.main:app --reload
 ```
 
-### Frontend
-
+### 2. Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Run tests
-
+### 3. Run Test Suite
+Run the complete automated test suite (all 58 tests run in-process with zero external server dependencies):
 ```bash
-cd backend
-pytest tests/ --ignore=tests/test_webhook_endpoint.py
+python -m pytest tests/ -v --tb=short
 ```
+
+---
 
 ## Known Limitations
 
-- Render free tier cold start (~1-3s on first request)
-- Gemini quota may affect AI investigation under load
-- Demo scenarios use fixture data, not live Razorpay traffic
+* **Render Free-Tier Cold Starts:** Render spins down free web services after 15 minutes of inactivity. The initial request after idle may experience a ~1291ms cold-start latency.
+* **Local vs Deployed Database Latency:** Connecting to the Supabase PostgreSQL cluster (`ap-northeast-2`) from local development environments incurs ~2.4–2.6s latency due to geographic routing, whereas the deployed Render backend connects at ~366–370ms.
+* **Gemini Free-Tier Rate Limits:** The live investigation layer operates within Google Gemini's standard free-tier rate limits (15 RPM). Rapid automated looping on AI-enabled scenarios may encounter rate limits, in which case the system gracefully falls back to `INCONCLUSIVE`.
+* **Python SDK Warnings:** Minor upstream deprecation notices from Starlette `TestClient` and `google.genai` union types in Python 3.14 do not impact execution.
 
-## Build Challenges
+---
 
-Local-to-Supabase query latency measured at 2,400–2,600 ms during development due to geographic distance between the dev machine and the `ap-northeast-2` Supabase cluster; the issue disappeared once the backend was deployed to Render, which connects at ~366 ms. A Render auto-deploy synchronisation failure caused the webhook endpoint to return 404 in production while passing all local tests, requiring a manual deploy trigger and a version check via the `/health` endpoint to diagnose the stale deployment. A webhook secret mismatch between the Razorpay dashboard configuration and the Render environment variable caused genuine Test Mode webhooks to be silently rejected while locally-simulated webhooks continued to pass, resolved by rotating and re-syncing the secret across both sides.
+## Build Challenges & Technical Obstacles
+
+During implementation, genuine engineering obstacles were encountered, investigated, and resolved:
+
+1. **Supabase Query Latency Discrepancy:**
+   * *Problem:* Local health probes and query round-trips to Supabase showed 2,400–2,600ms latency during initial development.
+   * *Investigation & Fix:* Traced to physical routing distance between the local dev machine and the Seoul (`ap-northeast-2`) database cluster. Deploying the FastAPI backend to Render colocated the service path, bringing live database query latency down to ~366–370ms.
+2. **Render Auto-Deploy Synchronization Lag:**
+   * *Problem:* Webhook routes returned HTTP 404 in production while passing all local tests.
+   * *Investigation & Fix:* Verified via `/health` that the live container had not auto-deployed the latest GitHub commit. Resolved by creating a forced deploy trigger and verifying commit synchronisation via the `/health` diagnostic response.
+3. **Webhook Secret Mismatch on Genuine Events:**
+   * *Problem:* Real Razorpay Test Mode webhooks were failing HMAC-SHA256 signature verification in production, even though simulated local tests passed.
+   * *Investigation & Fix:* Simulated unit tests were computing signatures with the local `.env` secret, while genuine Razorpay traffic was signed with the secret configured in the Razorpay dashboard. Resolved by rotating and re-syncing the secret across both the Razorpay dashboard and Render environment variables.

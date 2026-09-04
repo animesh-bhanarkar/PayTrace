@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Day 6 Complete — Submission Ready (+ post-submission bug fix, 2026-09-04)
-**Updated by:** Antigravity — Gemini SDK migration (google-genai), README, secret scan, final hardening. Bug fix: duplicate_webhook AI-trigger logic. 50 tests passing.
+**Last updated:** Day 6 Complete — Submission Ready (+ test suite hardening & in-process TestClient conversion, 2026-09-04)
+**Updated by:** Antigravity — Gemini SDK migration (google-genai), README, secret scan, duplicate_webhook fix, 3 adversarial/fallback tests, in-process TestClient conversion. 58 tests passing.
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -212,8 +212,10 @@ It must not be used to override the frozen architecture without the required rev
 * [x] Day 6: Migrated Gemini SDK from `google-generativeai` to `google-genai` (v2.9.0); model set to `gemini-3.6-flash` per API redirect
 * [x] Day 6: `requirements.txt` updated — `google-generativeai` removed, `google-genai>=2.9.0` added
 * [x] Day 6: Live Gemini call verified end-to-end (structured JSON returned, no error field)
-* [x] Day 6: Full test suite run — 49 passed, 0 failed
-* [x] Day 6: `README.md` created at project root with architecture, pipeline, demo links, safety design, evaluation, local dev, known limitations, and build challenges
+* [x] Day 6: Added Gemini failure fallback unit tests (`gemini_unavailable`, `structured_output_failure`) and prompt injection tests (commit `efdccf8`)
+* [x] Day 6: Converted webhook endpoint tests to in-process FastAPI `TestClient` (commit `b88472e`)
+* [x] Day 6: Full test suite run — 58 passed, 0 failed
+* [x] Day 6: `README.md` updated at project root with architecture, pipeline, demo links, safety design, evaluation, local dev, known limitations, and build challenges
 * [x] Day 6: Secret scan passed — no real secret values found in tracked source files
 * [x] Day 6: Final commit `fef0a2a` pushed to `origin/main`
 
@@ -241,7 +243,10 @@ None.
 
 Day 6: README created, Gemini SDK migrated to google-genai, secret scan passed clean, 49 tests passing, final commit `fef0a2a` pushed. Phase = "Day 6 Complete — Submission Ready".
 
-Post Day 6 (2026-09-04): Live scenario replay verification found a real logic bug — Scenario 03 (Duplicate Webhook) returned `passed=false` on live Render infrastructure. Bug fixed in `authoritative_rules.py` (commit `4d27be9`). 50 tests passing.
+Post Day 6 (2026-09-04): 
+1. Live scenario replay verification found a real logic bug — Scenario 03 (Duplicate Webhook) returned `passed=false` on live Render infrastructure. Bug fixed in `authoritative_rules.py` (commit `4d27be9`).
+2. Added Gemini failure fallback and prompt injection tests (commit `efdccf8`).
+3. Converted webhook endpoint tests to in-process FastAPI TestClient (commit `b88472e`). Full suite: 58 tests passing.
 
 ---
 
@@ -542,7 +547,7 @@ Day 1 goal:
 ## Repository
 
 * [x] GitHub repository created
-* [ ] Repository is public
+* [x] Repository is public
 * [x] Initial project structure
 * [x] `.gitignore`
 * [x] `.env.example`

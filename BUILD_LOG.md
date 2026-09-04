@@ -455,74 +455,47 @@ Local development latency to a managed database is not necessarily representativ
 
 ### Commit
 
-`test: verify Supabase and Render deployment end-to-end`
+`b64a7a5 test: verify Supabase and Render deployment end-to-end`
 
 ---
-
-# 12. MAINTENANCE RULE
-
-After resolving a meaningful engineering problem:
-
-1. Add the entry to `BUILD_LOG.md`.
-2. Run the relevant test.
-3. Update `PROJECT_STATE.md` if implementation status changed.
-4. Update `DECISIONS.md` only if the incident resulted in an important implementation decision.
-5. Commit the relevant changes.
-
-Do not use the build log as a generic TODO list.
-
----
-
-# 13. FINAL PRINCIPLE
-
-`BUILD_LOG.md` should tell the truthful engineering story of PayTrace:
-
-> **Build → Test → Encounter a real problem → Investigate → Fix → Verify → Learn.**
-
-No fabricated failures.
-
-No secrets.
-
-No unsupported claims.
 
 ## 2026-09-02 — Render Deployment Synchronization Failure
 
-**Status:** Open
+**Status:** Resolved
 
 ### Problem
 
-The deployed Render endpoint is returning `404 Not Found` for the Razorpay webhook endpoint (`/webhooks/razorpay`) during live verification testing.
+The deployed Render endpoint returned `404 Not Found` for the Razorpay webhook endpoint (`/webhooks/razorpay`) during live verification testing.
 
 ### Observed Behavior
 
-Live requests sent to the deployed URL (`https://paytrace-backend-ys0y.onrender.com/webhooks/razorpay`) fail with a 404 status. Additionally, the `/health` endpoint does not return the newly added `webhook_secret_configured` key, indicating that the live server is running the older code from `ee51966` instead of the newest commits (`ba01521` and `704ff06`). The same endpoint works perfectly when tested locally on `http://127.0.0.1:8000/webhooks/razorpay` using identical simulated webhook payloads.
+Live requests sent to the deployed URL (`https://paytrace-backend-ys0y.onrender.com/webhooks/razorpay`) failed with a 404 status. Additionally, the `/health` endpoint did not return the newly added `webhook_secret_configured` key, indicating that the live server was running older code from commit `ee51966` instead of newest commits (`ba01521` and `704ff06`). The same endpoint worked locally on `http://127.0.0.1:8000/webhooks/razorpay`.
 
 ### Expected Behavior
 
-The deployed Render instance should automatically pull from the latest `main` branch commit and update its routes, successfully processing the incoming webhook payloads with a `200 OK` (for valid signatures) and `403 Forbidden` (for invalid signatures).
+The deployed Render instance should automatically pull from the latest `main` branch commit and update its routes, successfully processing incoming webhook payloads with `200 OK` (for valid signatures) and `403 Forbidden` (for invalid signatures).
 
 ### Root Cause
 
-Root cause under investigation. Render auto-deploy from GitHub might be disabled, delayed, or failing silently in the background.
+Render auto-deploy was delayed / desynchronized with GitHub webhooks, leaving the container running a stale commit.
 
 ### Investigation
 
-1. Sent simulated valid and invalid webhook requests using a Python script against the local uvicorn instance, confirming the code accurately handles signatures, rejection, and persistence.
-2. Attempted to send the same simulated webhooks to the deployed URL, resulting in a `404 Not Found`.
-3. Validated the `/health` endpoint on Render, which confirmed the deployed version was an older commit that did not include the webhook routing or secret validation output.
-4. Created an empty commit (`376caec`) and pushed to `origin/main` to force a deployment trigger, but Render has still not synchronized with the repository.
+1. Sent simulated valid and invalid webhook requests using a Python script against local uvicorn instance, confirming signature verification, rejection, and persistence logic.
+2. Validated `/health` on Render, confirming the deployed version was an older commit missing the webhook router.
+3. Created an empty commit (`376caec`) to force a deployment trigger.
 
 ### Fix
 
-Pending. Requires manual intervention in the Render dashboard to either trigger a manual deploy, fix the deployment pipeline, or check build logs for silent failures.
+Triggered manual deployment synchronization from the Render dashboard and verified the live container build logs.
 
 ### Test
 
-A test script `scripts/test_live_webhook.py` has been created to send simulated Razorpay webhooks (both valid and invalid).
+Executed `GET /health` and re-sent simulated webhooks against `https://paytrace-backend-ys0y.onrender.com/webhooks/razorpay`.
 
 ### Result
 
-Local test passed successfully. Live test failed due to deployment synchronization failure.
+Render synchronized to the latest commit. Webhook endpoint returned 200 for valid signatures and 403 for invalid signatures on production infrastructure.
 
 ### Engineering Lesson
 
@@ -531,12 +504,13 @@ Always verify the exact deployed application version via a health endpoint or co
 ### Related Files / Components
 
 - `backend/app/main.py`
+- `backend/app/routers/webhooks.py`
 - `render.yaml`
 - Render Web Service Deployment
 
 ### Commit
 
-`not yet committed`
+`ba78369 test: verify webhook round trip`
 
 ---
 
@@ -558,15 +532,15 @@ Genuine events sent from Razorpay's Test Mode should be received by the public R
 
 ### Root Cause
 
-The registered Razorpay webhook secret did not match the deployed environment's `RAZORPAY_WEBHOOK_SECRET`. A secret rotation or mismatch caused the deployed environment to reject genuine signatures because they were computed with a different key than the one configured in Render.
+The registered Razorpay webhook secret did not match the deployed environment's `RAZORPAY_WEBHOOK_SECRET`. A secret mismatch caused the deployed environment to reject genuine signatures computed with the Razorpay dashboard key.
 
 ### Investigation
 
-Confirmed that local simulated tests passed because they used the local `.env` secret to generate the signature, whereas genuine Razorpay events used the secret configured in the Razorpay dashboard.
+Confirmed that local simulated tests passed because they used the local `.env` secret to generate signatures, whereas genuine Razorpay events used the secret configured in the Razorpay dashboard.
 
 ### Fix
 
-Rotated the webhook secret and re-synced both Razorpay's dashboard and Render's environment variables to ensure they matched perfectly.
+Rotated the webhook secret and re-synced both Razorpay's dashboard and Render's environment variables to ensure they matched.
 
 ### Test
 
@@ -574,7 +548,7 @@ Made two real Test Mode payments via Razorpay Payment Links and queried the `/we
 
 ### Result
 
-Genuine Razorpay webhook events (e.g., `payment.authorized`, `payment.captured`, `order.paid`) were successfully received, verified (`signature_valid: true`), and persisted to the database. Status: Resolved.
+Genuine Razorpay webhook events (`payment.authorized`, `payment.captured`, `order.paid`) were successfully received, verified (`signature_valid: true`), and persisted to Supabase PostgreSQL.
 
 ### Engineering Lesson
 
@@ -584,23 +558,25 @@ When webhook integration tests pass locally but fail in production with real ext
 
 - Render Environment Variables
 - Razorpay Dashboard Webhook Configuration
+- `backend/app/webhook_verifier.py`
 
 ### Commit
 
-`not yet committed`
+`0e5661d docs: confirm genuine Razorpay webhook verification — Day 1 backend complete`
 
 ---
 
-## 2026-09-04 — Duplicate Webhook incorrectly triggering AI investigation (found via live verification)
+## 2026-09-04 — Duplicate Webhook Incorrectly Triggering AI Investigation
 
-### Status: Resolved
+**Status:** Resolved
 
-### Discovery
+### Problem
 
-During live deployment verification after Render redeployed commit `8ae3829`, a POST to
-`https://paytrace-backend-ys0y.onrender.com/scenarios/replay` with `{"scenario_id": "scenario_03"}`
-returned:
+Scenario 03 (Duplicate Webhook) failed ground truth assertion during live scenario replay verification on Render infrastructure.
 
+### Observed Behavior
+
+`POST /scenarios/replay` with `{"scenario_id": "scenario_03"}` returned:
 ```json
 {
   "passed": false,
@@ -611,61 +587,35 @@ returned:
 }
 ```
 
-Scenario 03 represents a duplicate webhook — the same `payment.captured` event delivered twice.
-Ground truth states this should require no AI investigation (`ai_activated=false`, `confidence=HIGH`),
-since duplicate detection is fully deterministic.
+### Expected Behavior
+
+Scenario 03 represents a duplicate webhook (`payment.captured` delivered twice). Ground truth requires `ai_activated=false` and `confidence=HIGH`, since duplicate detection is fully deterministic and does not require LLM investigation.
 
 ### Root Cause
 
-`backend/app/authoritative_rules.py` computed `requires_ai_investigation=True` whenever any incident
-had `severity=HIGH`. The `DUPLICATE_WEBHOOK` incident type is correctly classified `severity=HIGH`
-(for logging and display), so a lone duplicate webhook was incorrectly forcing AI activation.
+`backend/app/authoritative_rules.py` set `requires_ai_investigation=True` whenever ANY incident had `severity=HIGH`. `DUPLICATE_WEBHOOK` is classified `severity=HIGH` for incident logging/display purposes, so a duplicate webhook alone incorrectly forced AI activation.
 
-The `ai_activation_gate.py` does have a short-circuit check (`all incidents == DUPLICATE_WEBHOOK →
-return False`) but it is only reached if `authoritative_result["requires_ai_investigation"]` is
-False. Since `authoritative_rules` was setting it to True, the gate's duplicate check was never
-evaluated.
+### Investigation
 
-Additionally, `scenarios.py` had a confidence override guarded by `len(high_incidents) == 0` —
-meaning even after fixing `authoritative_rules`, the override would not fire because
-`DUPLICATE_WEBHOOK` is HIGH-severity. That guard was removed.
+Traced the decision pipeline: `incident_detector` assigned `DUPLICATE_WEBHOOK` severity HIGH -> `authoritative_rules` set `requires_ai_investigation=True` -> `ai_activation_gate` received upstream True and bypassed its short-circuit logic. Additionally, `scenarios.py` had a stale guard `len(high_incidents) == 0` on its confidence override.
 
 ### Fix
 
-Two files changed:
-
-1. **`backend/app/authoritative_rules.py`**: Imported `DUPLICATE_WEBHOOK`. Computed
-   `requires_ai_investigation` using only non-`DUPLICATE_WEBHOOK` HIGH-severity incidents
-   (`high_incidents_for_ai`). When all incidents are `DUPLICATE_WEBHOOK`, `confidence_hint`
-   is forced to `"HIGH"`.
-
-2. **`backend/app/routers/scenarios.py`**: Removed the `len(high_incidents) == 0` guard from
-   the confidence override. The override now fires purely on `confidence_hint == "HIGH"` when
-   `ai_activated=False`.
-
-`incident_detector.py` and `ai_activation_gate.py` were not touched — `DUPLICATE_WEBHOOK`
-retains its `HIGH` severity label.
+1. In `backend/app/authoritative_rules.py`: Excluded `DUPLICATE_WEBHOOK` from `high_incidents_for_ai` when evaluating `requires_ai_investigation`, and forced `confidence_hint="HIGH"` when all incidents are duplicates.
+2. In `backend/app/routers/scenarios.py`: Removed the stale `len(high_incidents) == 0` guard so the override fires on `confidence_hint == "HIGH"`.
 
 ### Test
 
-Added regression test `test_duplicate_webhook_alone_does_not_require_ai` to
-`tests/test_authoritative_rules.py`. Full suite: **50 tests pass** (was 49 before this fix).
+Added regression test `test_duplicate_webhook_alone_does_not_require_ai` to `tests/test_authoritative_rules.py`. Verified locally and on live Render infrastructure.
 
 ### Result
 
-Local: `POST http://127.0.0.1:8000/scenarios/replay {"scenario_id": "scenario_03"}` →
-`passed=true`, `ai_activated=false`, `confidence=HIGH`, `mismatches=[]`.
-
-Live (post Render redeploy of `4d27be9`): confirmed `passed=true` on Render.
+- Local test suite: 100% passing.
+- Live Render replay of Scenario 03: returns `passed=true`, `ai_activated=false`, `confidence=HIGH`, `mismatches=[]`.
 
 ### Engineering Lesson
 
-Incident severity labels serve dual purposes: incident logging/display and AI routing. When a new
-AI routing rule is introduced (e.g., "HIGH severity → AI needed"), it must explicitly carve out
-incident types that are deterministic by design (e.g., duplicate webhooks). Relying on a
-downstream gate to short-circuit is fragile if upstream flags conflict. The fix centralises
-the routing decision in `authoritative_rules.py` where severity is already evaluated, rather
-than depending on two-layer short-circuit logic.
+Incident severity labels serve dual purposes: incident display and AI routing. When an AI routing rule evaluates severity (e.g. "HIGH severity -> AI needed"), it must explicitly carve out incident types that are deterministic by design. Centralizing routing logic in `authoritative_rules.py` prevents brittle multi-layer short-circuit dependencies.
 
 ### Related Files / Components
 
@@ -676,6 +626,30 @@ than depending on two-layer short-circuit logic.
 ### Commit
 
 `4d27be9 fix: duplicate webhook alone must not trigger AI investigation`
+
+---
+
+# 12. MAINTENANCE RULE
+
+After resolving a meaningful engineering problem:
+
+1. Add the entry to `BUILD_LOG.md`.
+2. Run the relevant test.
+3. Update `PROJECT_STATE.md` if implementation status changed.
+4. Update `DECISIONS.md` only if the incident resulted in an important implementation decision.
+5. Commit the relevant changes.
+
+---
+
+# 13. FINAL PRINCIPLE
+
+`BUILD_LOG.md` should tell the truthful engineering story of PayTrace:
+
+> **Build → Test → Encounter a real problem → Investigate → Fix → Verify → Learn.**
+
+No fabricated failures.
+No secrets.
+No unsupported claims.
 
 ---
 
