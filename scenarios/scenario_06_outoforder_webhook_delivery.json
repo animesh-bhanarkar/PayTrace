@@ -1,0 +1,45 @@
+{
+  "scenario_id": "scenario_06",
+  "name": "Out-of-Order Webhook Delivery",
+  "description": "payment.authorized arrives before payment.created (lower timestamp). OUT_OF_ORDER detected (MEDIUM). Both events have valid sequential content, state reaches authorized.",
+  "ground_truth": {
+    "expected_state": "authorized",
+    "expected_incidents": [
+      "invalid_transition",
+      "out_of_order"
+    ],
+    "expected_ai_activated": true,
+    "expected_confidence": "INCONCLUSIVE",
+    "expected_abstain": true
+  },
+  "events": [
+    {
+      "id": "evt_s06_002",
+      "event": "payment.authorized",
+      "created_at": 1700000060,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s06",
+            "order_id": "order_s06",
+            "status": "authorized"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s06_001",
+      "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s06",
+            "order_id": "order_s06",
+            "status": "created"
+          }
+        }
+      }
+    }
+  ]
+}

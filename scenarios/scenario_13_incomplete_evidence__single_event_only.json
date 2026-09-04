@@ -1,0 +1,28 @@
+{
+  "scenario_id": "scenario_13",
+  "name": "Incomplete Evidence \u2014 Single Event Only",
+  "description": "Only payment.created received, no further events. MISSING_EVIDENCE incident (LOW severity). AI not activated since all incidents are LOW severity.",
+  "ground_truth": {
+    "expected_state": "created",
+    "expected_incidents": [],
+    "expected_ai_activated": false,
+    "expected_confidence": "HIGH",
+    "expected_abstain": false
+  },
+  "events": [
+    {
+      "id": "evt_s13_001",
+      "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s13",
+            "order_id": "order_s13",
+            "status": "created"
+          }
+        }
+      }
+    }
+  ]
+}

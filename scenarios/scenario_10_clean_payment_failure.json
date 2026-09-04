@@ -1,0 +1,56 @@
+{
+  "scenario_id": "scenario_10",
+  "name": "Clean Payment Failure",
+  "description": "payment.created \u2192 payment.authorized \u2192 payment.failed in order. Valid terminal state, no anomalies.",
+  "ground_truth": {
+    "expected_state": "failed",
+    "expected_incidents": [],
+    "expected_ai_activated": false,
+    "expected_confidence": "HIGH",
+    "expected_abstain": false
+  },
+  "events": [
+    {
+      "id": "evt_s10_001",
+      "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s10",
+            "order_id": "order_s10",
+            "status": "created"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s10_002",
+      "event": "payment.authorized",
+      "created_at": 1700000060,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s10",
+            "order_id": "order_s10",
+            "status": "authorized"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s10_003",
+      "event": "payment.failed",
+      "created_at": 1700000120,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s10",
+            "order_id": "order_s10",
+            "status": "failed"
+          }
+        }
+      }
+    }
+  ]
+}

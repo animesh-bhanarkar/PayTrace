@@ -1,0 +1,86 @@
+{
+  "scenario_id": "scenario_14",
+  "name": "Duplicate Capture Then Refund",
+  "description": "Duplicate payment.captured, then valid payment.refunded. DUPLICATE_WEBHOOK present, state still reaches refunded cleanly.",
+  "ground_truth": {
+    "expected_state": "refunded",
+    "expected_incidents": [
+      "duplicate_webhook"
+    ],
+    "expected_ai_activated": false,
+    "expected_confidence": "HIGH",
+    "expected_abstain": false
+  },
+  "events": [
+    {
+      "id": "evt_s14_001",
+      "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s14",
+            "order_id": "order_s14",
+            "status": "created"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s14_002",
+      "event": "payment.authorized",
+      "created_at": 1700000060,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s14",
+            "order_id": "order_s14",
+            "status": "authorized"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s14_003",
+      "event": "payment.captured",
+      "created_at": 1700000120,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s14",
+            "order_id": "order_s14",
+            "status": "captured"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s14_003",
+      "event": "payment.captured",
+      "created_at": 1700000120,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s14",
+            "order_id": "order_s14",
+            "status": "captured"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s14_004",
+      "event": "payment.refunded",
+      "created_at": 1700000200,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s14",
+            "order_id": "order_s14",
+            "status": "refunded"
+          }
+        }
+      }
+    }
+  ]
+}

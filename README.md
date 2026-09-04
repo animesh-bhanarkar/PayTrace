@@ -153,3 +153,27 @@ During implementation, genuine engineering obstacles were encountered, investiga
 3. **Webhook Secret Mismatch on Genuine Events:**
    * *Problem:* Real Razorpay Test Mode webhooks were failing HMAC-SHA256 signature verification in production, even though simulated local tests passed.
    * *Investigation & Fix:* Simulated unit tests were computing signatures with the local `.env` secret, while genuine Razorpay traffic was signed with the secret configured in the Razorpay dashboard. Resolved by rotating and re-syncing the secret across both the Razorpay dashboard and Render environment variables.
+
+---
+
+## Controlled Benchmark Results
+
+> **These are in-process benchmark results, not production measurements.** All three modes run via FastAPI `TestClient` in memory. No live Gemini API calls are made; the LLM response is stubbed with a fixed HIGH-confidence claim so the comparison is structurally valid. Latency figures are indicative in-process timings only. See [`scripts/run_benchmark.py`](scripts/run_benchmark.py) to reproduce.
+
+**Corpus:** 15 scenarios across 8 distinct anomaly categories.  
+**Run:** `python scripts/run_benchmark.py`  
+**Raw results:** [`results/benchmark.json`](results/benchmark.json)
+
+| Mode | Pass Rate | Root-Cause Match | AI Activated | Abstention Rate | Avg Latency (indicative) |
+|---|---|---|---|---|---|
+| **Full Pipeline** | 100% (15/15) | 100% (15/15) | 5/15 | 33.3% (5/15) | ~14 ms |
+| Baseline A (rules-only) | 66.7% (10/15) | 100% (15/15) | 0/15 | 0% (0/15) | ~12 ms |
+| Baseline B1 (raw LLM, no verifier) | 0% (0/15) | 100% (15/15) | 15/15 | 0% (0/15) | ~13 ms |
+
+**Interpretation:**
+
+- **Full pipeline passes 15/15.** Ground truth was derived from actual observed pipeline behavior, so these pass rates represent the pipeline faithfully encoding its own deterministic logic — not an accuracy claim against real incidents.
+- **Baseline A (rules-only) passes 10/15.** The 5 failures are scenarios where the full pipeline correctly abstains with INCONCLUSIVE (AI activated but evidence is insufficient), while Baseline A suppresses AI and reports LOW confidence without abstaining — a behaviorally different and arguably less safe output.
+- **Baseline B1 (raw LLM) passes 0/15.** Every scenario fails the `ai_activated` ground truth check because Baseline B1 forces AI on unconditionally, including for clean HIGH-confidence payments. Root-cause match is still 100% because all three modes use the same deterministic incident detector. The differentiator between modes is *routing + confidence calibration*, not *incident detection*.
+- **Root-cause detection is 100% across all modes** because it is purely deterministic (state machine + incident detector) and does not depend on the AI layer.
+

@@ -1,0 +1,42 @@
+{
+  "scenario_id": "scenario_11",
+  "name": "Payment Failed at Created Stage",
+  "description": "payment.created \u2192 payment.failed immediately (no authorization). Valid transition per state machine, high confidence.",
+  "ground_truth": {
+    "expected_state": "failed",
+    "expected_incidents": [],
+    "expected_ai_activated": false,
+    "expected_confidence": "HIGH",
+    "expected_abstain": false
+  },
+  "events": [
+    {
+      "id": "evt_s11_001",
+      "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s11",
+            "order_id": "order_s11",
+            "status": "created"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s11_002",
+      "event": "payment.failed",
+      "created_at": 1700000060,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s11",
+            "order_id": "order_s11",
+            "status": "failed"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "scenario_id": "scenario_08",
+  "name": "State Mismatch \u2014 Backward Transition",
+  "description": "payment.created \u2192 captured \u2192 then authorized arrives. Authorized after captured is an invalid transition. AI investigation required.",
+  "ground_truth": {
+    "expected_state": "captured",
+    "expected_incidents": [
+      "invalid_transition"
+    ],
+    "expected_ai_activated": true,
+    "expected_confidence": "INCONCLUSIVE",
+    "expected_abstain": true
+  },
+  "events": [
+    {
+      "id": "evt_s08_001",
+      "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s08",
+            "order_id": "order_s08",
+            "status": "created"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s08_002",
+      "event": "payment.authorized",
+      "created_at": 1700000060,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s08",
+            "order_id": "order_s08",
+            "status": "authorized"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s08_003",
+      "event": "payment.captured",
+      "created_at": 1700000120,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s08",
+            "order_id": "order_s08",
+            "status": "captured"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s08_004",
+      "event": "payment.authorized",
+      "created_at": 1700000180,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s08",
+            "order_id": "order_s08",
+            "status": "authorized"
+          }
+        }
+      }
+    }
+  ]
+}

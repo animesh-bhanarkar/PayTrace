@@ -1,0 +1,693 @@
+{
+  "generated_at": "2026-09-04T13:12:41.389322Z",
+  "total_scenarios": 15,
+  "scenario_ids": [
+    "scenario_01",
+    "scenario_02",
+    "scenario_03",
+    "scenario_04",
+    "scenario_05",
+    "scenario_06",
+    "scenario_07",
+    "scenario_08",
+    "scenario_09",
+    "scenario_10",
+    "scenario_11",
+    "scenario_12",
+    "scenario_13",
+    "scenario_14",
+    "scenario_15"
+  ],
+  "aggregates": {
+    "full_pipeline": {
+      "total_scenarios": 15,
+      "passed": 15,
+      "pass_rate": 1.0,
+      "root_cause_match": 15,
+      "root_cause_match_rate": 1.0,
+      "ai_activated_count": 5,
+      "abstention_count": 5,
+      "abstention_rate": 0.333,
+      "avg_latency_ms": 14.3,
+      "note": "Latency figures are indicative only (in-process TestClient, not network-round-trip). Not a measured production study."
+    },
+    "baseline_a": {
+      "total_scenarios": 15,
+      "passed": 10,
+      "pass_rate": 0.667,
+      "root_cause_match": 15,
+      "root_cause_match_rate": 1.0,
+      "ai_activated_count": 0,
+      "abstention_count": 0,
+      "abstention_rate": 0.0,
+      "avg_latency_ms": 12.1,
+      "note": "Latency figures are indicative only (in-process TestClient, not network-round-trip). Not a measured production study."
+    },
+    "baseline_b1": {
+      "total_scenarios": 15,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "root_cause_match": 15,
+      "root_cause_match_rate": 1.0,
+      "ai_activated_count": 15,
+      "abstention_count": 0,
+      "abstention_rate": 0.0,
+      "avg_latency_ms": 13.2,
+      "note": "Latency figures are indicative only (in-process TestClient, not network-round-trip). Not a measured production study."
+    }
+  },
+  "per_scenario": {
+    "scenario_01": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 42.2
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 10.9
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 14.6
+      }
+    },
+    "scenario_02": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "INCONCLUSIVE",
+        "abstained": true,
+        "actual_state": "unknown",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [],
+        "latency_ms": 12.4
+      },
+      "baseline_a": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "LOW",
+        "abstained": false,
+        "actual_state": "unknown",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [
+          "ai_activated mismatch: expected True, got False",
+          "confidence mismatch: expected INCONCLUSIVE, got LOW",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 11.9
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "unknown",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [
+          "confidence mismatch: expected INCONCLUSIVE, got HIGH",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 12.6
+      }
+    },
+    "scenario_03": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "duplicate_webhook"
+        ],
+        "mismatches": [],
+        "latency_ms": 14.2
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "duplicate_webhook"
+        ],
+        "mismatches": [],
+        "latency_ms": 12.3
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "duplicate_webhook"
+        ],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 13.7
+      }
+    },
+    "scenario_04": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "created",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 12.0
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "created",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 11.5
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "created",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 12.3
+      }
+    },
+    "scenario_05": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 13.5
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 12.2
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 12.7
+      }
+    },
+    "scenario_06": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "INCONCLUSIVE",
+        "abstained": true,
+        "actual_state": "authorized",
+        "actual_incidents": [
+          "invalid_transition",
+          "out_of_order"
+        ],
+        "mismatches": [],
+        "latency_ms": 11.8
+      },
+      "baseline_a": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "LOW",
+        "abstained": false,
+        "actual_state": "authorized",
+        "actual_incidents": [
+          "invalid_transition",
+          "out_of_order"
+        ],
+        "mismatches": [
+          "ai_activated mismatch: expected True, got False",
+          "confidence mismatch: expected INCONCLUSIVE, got LOW",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 11.5
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "authorized",
+        "actual_incidents": [
+          "invalid_transition",
+          "out_of_order"
+        ],
+        "mismatches": [
+          "confidence mismatch: expected INCONCLUSIVE, got HIGH",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 12.7
+      }
+    },
+    "scenario_07": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "INCONCLUSIVE",
+        "abstained": true,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition",
+          "out_of_order",
+          "duplicate_webhook"
+        ],
+        "mismatches": [],
+        "latency_ms": 11.7
+      },
+      "baseline_a": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "LOW",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition",
+          "out_of_order",
+          "duplicate_webhook"
+        ],
+        "mismatches": [
+          "ai_activated mismatch: expected True, got False",
+          "confidence mismatch: expected INCONCLUSIVE, got LOW",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 12.5
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition",
+          "out_of_order",
+          "duplicate_webhook"
+        ],
+        "mismatches": [
+          "confidence mismatch: expected INCONCLUSIVE, got HIGH",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 13.2
+      }
+    },
+    "scenario_08": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "INCONCLUSIVE",
+        "abstained": true,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [],
+        "latency_ms": 12.0
+      },
+      "baseline_a": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "LOW",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [
+          "ai_activated mismatch: expected True, got False",
+          "confidence mismatch: expected INCONCLUSIVE, got LOW",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 12.6
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [
+          "confidence mismatch: expected INCONCLUSIVE, got HIGH",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 13.9
+      }
+    },
+    "scenario_09": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "INCONCLUSIVE",
+        "abstained": true,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [],
+        "latency_ms": 13.1
+      },
+      "baseline_a": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "LOW",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [
+          "ai_activated mismatch: expected True, got False",
+          "confidence mismatch: expected INCONCLUSIVE, got LOW",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 12.4
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [
+          "invalid_transition"
+        ],
+        "mismatches": [
+          "confidence mismatch: expected INCONCLUSIVE, got HIGH",
+          "abstained mismatch: expected True, got False"
+        ],
+        "latency_ms": 13.5
+      }
+    },
+    "scenario_10": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "failed",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 11.4
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "failed",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 11.8
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "failed",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 13.2
+      }
+    },
+    "scenario_11": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "failed",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 11.6
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "failed",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 11.9
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "failed",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 12.6
+      }
+    },
+    "scenario_12": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "refunded",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 12.4
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "refunded",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 12.4
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "refunded",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 14.5
+      }
+    },
+    "scenario_13": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "created",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 11.3
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "created",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 13.0
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "created",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 13.0
+      }
+    },
+    "scenario_14": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "refunded",
+        "actual_incidents": [
+          "duplicate_webhook"
+        ],
+        "mismatches": [],
+        "latency_ms": 13.3
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "refunded",
+        "actual_incidents": [
+          "duplicate_webhook"
+        ],
+        "mismatches": [],
+        "latency_ms": 11.9
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "refunded",
+        "actual_incidents": [
+          "duplicate_webhook"
+        ],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 13.4
+      }
+    },
+    "scenario_15": {
+      "full_pipeline": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 11.5
+      },
+      "baseline_a": {
+        "passed": true,
+        "root_cause_match": true,
+        "ai_activated": false,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [],
+        "latency_ms": 12.3
+      },
+      "baseline_b1": {
+        "passed": false,
+        "root_cause_match": true,
+        "ai_activated": true,
+        "confidence": "HIGH",
+        "abstained": false,
+        "actual_state": "captured",
+        "actual_incidents": [],
+        "mismatches": [
+          "ai_activated mismatch: expected False, got True"
+        ],
+        "latency_ms": 11.7
+      }
+    }
+  },
+  "methodology_note": "All three modes run in-process via FastAPI TestClient. No live Gemini API calls are made; the LLM response is stubbed with a fixed HIGH-confidence claim. Baseline A forces the AI gate to False. Baseline B1 forces it to True with verifier/confidence bypassed. Latency figures are indicative in-process timings only, not measured production latencies."
+}

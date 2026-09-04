@@ -1,0 +1,56 @@
+{
+  "scenario_id": "scenario_15",
+  "name": "Order.paid Event \u2014 Alternate Capture Path",
+  "description": "payment.created \u2192 payment.authorized \u2192 order.paid (alternate event that resolves to captured). Valid transition, no anomalies.",
+  "ground_truth": {
+    "expected_state": "captured",
+    "expected_incidents": [],
+    "expected_ai_activated": false,
+    "expected_confidence": "HIGH",
+    "expected_abstain": false
+  },
+  "events": [
+    {
+      "id": "evt_s15_001",
+      "event": "payment.created",
+      "created_at": 1700000000,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s15",
+            "order_id": "order_s15",
+            "status": "created"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s15_002",
+      "event": "payment.authorized",
+      "created_at": 1700000060,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s15",
+            "order_id": "order_s15",
+            "status": "authorized"
+          }
+        }
+      }
+    },
+    {
+      "id": "evt_s15_003",
+      "event": "order.paid",
+      "created_at": 1700000120,
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_s15",
+            "order_id": "order_s15",
+            "status": "captured"
+          }
+        }
+      }
+    }
+  ]
+}

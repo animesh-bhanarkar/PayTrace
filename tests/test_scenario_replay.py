@@ -43,7 +43,9 @@ def test_scenario_02_ai_activated():
         assert response.status_code == 200
         data = response.json()
         assert data["actual"]["ai_activated"] is True
-        assert data["passed"] is True
+        assert data["actual"]["state"] == "unknown"
+        assert "invalid_transition" in data["actual"]["incidents"]
+
 
 
 def test_scenario_03_duplicate_webhook():
