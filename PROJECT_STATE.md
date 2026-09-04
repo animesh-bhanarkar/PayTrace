@@ -1,7 +1,7 @@
 # PROJECT_STATE.md — PayTrace
 
-**Last updated:** Day 5 Complete — Scenario Replay & Frontend Dashboard Implemented & Verified
-**Updated by:** Antigravity — Scenario replay engine, frontend dashboard, demo scenarios mode, 4 pytest tests passing, npm run build zero errors
+**Last updated:** Day 6 Complete — Submission Ready
+**Updated by:** Antigravity — Gemini SDK migration (google-genai), README, secret scan, final hardening. 49 tests passing.
 **Project:** PayTrace
 **Program:** Razorpay AI Buildathon 2026
 **Track:** Open Track
@@ -16,7 +16,7 @@
 
 # 1. CURRENT PHASE
 
-**Day 5 Complete — Scenario Replay & Frontend Dashboard Verified**
+**Day 6 Complete — Submission Ready**
 
 The PayTrace product and architecture are frozen and approved in:
 
@@ -209,12 +209,19 @@ It must not be used to override the frozen architecture without the required rev
 * [x] Day 5: Frontend Dashboard implemented with two tabs: "Investigate" and "Demo Scenarios"
 * [x] Day 5: Frontend components created (`ConfidenceBadge`, `IncidentBadge`, `EventTimeline`, `ClaimsPanel`)
 * [x] Day 5: Full production build (`npm run build`) passing with zero TypeScript errors
+* [x] Day 6: Migrated Gemini SDK from `google-generativeai` to `google-genai` (v2.9.0); model set to `gemini-3.6-flash` per API redirect
+* [x] Day 6: `requirements.txt` updated — `google-generativeai` removed, `google-genai>=2.9.0` added
+* [x] Day 6: Live Gemini call verified end-to-end (structured JSON returned, no error field)
+* [x] Day 6: Full test suite run — 49 passed, 0 failed
+* [x] Day 6: `README.md` created at project root with architecture, pipeline, demo links, safety design, evaluation, local dev, known limitations, and build challenges
+* [x] Day 6: Secret scan passed — no real secret values found in tracked source files
+* [x] Day 6: Final commit `fef0a2a` pushed to `origin/main`
 
 ---
 
 # 5. IN PROGRESS
 
-Day 5 complete — Ready for final deployment verification & demo recording.
+Nothing in progress. Project is submission-ready.
 
 ---
 
@@ -232,7 +239,7 @@ None.
 
 # 8. LAST COMPLETED TASK
 
-Day 5: Backend scenario replay engine and frontend dashboard with live investigation and demo scenarios mode. 4 pytest tests passing, `npm run build` compiled cleanly with zero errors.
+Day 6: README created, Gemini SDK migrated to google-genai, secret scan passed clean, 49 tests passing, final commit `fef0a2a` pushed. Phase = "Day 6 Complete — Submission Ready".
 
 ---
 
