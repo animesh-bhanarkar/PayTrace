@@ -32,12 +32,30 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   // Calculate truthful aggregate metrics
   const totalIncidents = incidents.length;
   const highSeverityCount = incidents.filter(
-    (i) => i.severity === "HIGH" || i.severity === "high"
+    (i) => (i.severity || "").toUpperCase() === "HIGH"
   ).length;
-  const resolvedCount = incidents.filter((i) => i.resolved).length;
-  const openCount = totalIncidents - resolvedCount;
+
+  // Operational status breakdown (Phase 6)
+  const openCount = incidents.filter(
+    (i) => (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() === "OPEN"
+  ).length;
+  const investigatingCount = incidents.filter(
+    (i) => (i.operational_status || "").toUpperCase() === "INVESTIGATING"
+  ).length;
+  const actionRequiredCount = incidents.filter(
+    (i) => (i.operational_status || "").toUpperCase() === "ACTION_REQUIRED"
+  ).length;
+  const resolvedCount = incidents.filter(
+    (i) => (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() === "RESOLVED"
+  ).length;
+  const highPriorityUnresolved = incidents.filter((i) => {
+    const isUnres = (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() !== "RESOLVED";
+    const p = (i.priority || "MEDIUM").toUpperCase();
+    return isUnres && (p === "CRITICAL" || p === "HIGH");
+  }).length;
+
   const aiActivatedCount = incidents.filter(
-    (i) => i.ai_required || i.severity === "HIGH"
+    (i) => i.ai_required || (i.severity || "").toUpperCase() === "HIGH"
   ).length;
   const deterministicCount = totalIncidents - aiActivatedCount;
 
@@ -64,7 +82,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
             Deterministic state reconstruction, HMAC cryptographic signature verification,
-            and anti-hallucination claim verification powered by Gemini 2.5 Flash.
+            and human-controlled operational workflows.
           </p>
 
           {/* Quick Search / Direct Investigation Box */}
@@ -94,63 +112,119 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
         <div className="absolute -right-16 -top-16 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
       </div>
 
-      {/* ── Truthful Metrics KPI Grid ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Total Incidents */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5 transition">
+      {/* ── Operational Workflow KPI Grid (Phase 6) ────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {/* Metric 1: Open */}
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>Total Tracked Incidents</span>
+            <span>Open Incidents</span>
             <AlertTriangle className="w-4 h-4 text-slate-400" />
           </div>
           <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
-            {totalIncidents}
+            {openCount}
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            {scenarios.length} test fixtures available
+            {totalIncidents} total • {scenarios.length} test scenarios
           </div>
         </div>
 
-        {/* Metric 2: High Severity */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5 transition">
+        {/* Metric 2: Investigating */}
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>High Severity Anomalies</span>
+            <span>Investigating</span>
+            <Clock className="w-4 h-4 text-indigo-400" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
+            {investigatingCount}
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            Under active human analysis
+          </div>
+        </div>
+
+        {/* Metric 3: Action Required */}
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+            <span>Action Required</span>
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+            {actionRequiredCount}
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            Escalated or merchant outreach
+          </div>
+        </div>
+
+        {/* Metric 4: High/Critical Priority */}
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+            <span>High/Critical Triage</span>
             <AlertTriangle className="w-4 h-4 text-rose-500" />
           </div>
           <div className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">
-            {highSeverityCount}
+            {highPriorityUnresolved}
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            State mismatches & invalid transitions
+            Unresolved triage priority
           </div>
         </div>
 
-        {/* Metric 3: AI Triggered vs Bypassed */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5 transition">
+        {/* Metric 5: Resolved */}
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>AI Activation Gate</span>
-            <Cpu className="w-4 h-4 text-indigo-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
-            {aiActivatedCount}{" "}
-            <span className="text-xs font-normal text-slate-500">/ {deterministicCount} bypassed</span>
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Only complex anomalies trigger LLM
-          </div>
-        </div>
-
-        {/* Metric 4: Resolution Status */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5 transition">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>Resolution Status</span>
+            <span>Operationally Resolved</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-            {resolvedCount}{" "}
-            <span className="text-xs font-normal text-amber-500">({openCount} open)</span>
+            {resolvedCount}
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Operator confirmed resolution states
+            Remediation confirmed
+          </div>
+        </div>
+      </div>
+
+      {/* ── Technical Diagnostics & AI Gate Strip ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold text-xs">
+              !
+            </div>
+            <div>
+              <span className="text-xs font-semibold text-slate-900 dark:text-white block">
+                Technical High-Severity Anomalies
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                Payment state mismatches & invalid lifecycle transitions
+              </span>
+            </div>
+          </div>
+          <span className="text-lg font-bold font-mono text-rose-600 dark:text-rose-400">
+            {highSeverityCount}
+          </span>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-xs">
+              ⚡
+            </div>
+            <div>
+              <span className="text-xs font-semibold text-slate-900 dark:text-white block">
+                Deterministic vs. AI Gate Split
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                {deterministicCount} processed deterministically
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-lg font-bold font-mono text-indigo-600 dark:text-indigo-400">
+              {aiActivatedCount}
+            </span>
+            <span className="text-[10px] text-slate-400 block">AI Triggered</span>
           </div>
         </div>
       </div>

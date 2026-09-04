@@ -91,7 +91,14 @@ export interface IncidentRecord {
   resolved: boolean;
   resolution_notes?: string | null;
   resolved_at?: string | null;
+  detected_at?: string | null;
   created_at: string | null;
+  // Phase 6 Operational Workflow fields
+  operational_status?: OperationalStatus | string;
+  priority?: OperationalPriority | string;
+  tags?: string[];
+  assignee?: string | null;
+  workflow_history?: WorkflowHistoryItem[];
   // Computed / UI fields
   state?: string;
   confidence?: string;
@@ -356,6 +363,44 @@ export interface SimilarIncidentsResponse {
   recurring_patterns: PatternSummaryItem[];
   total_compared: number;
   matches_found: number;
+}
+
+// --- PHASE 6: OPERATIONAL WORKFLOW TYPES ---
+
+export type OperationalStatus = "OPEN" | "INVESTIGATING" | "ACTION_REQUIRED" | "RESOLVED";
+
+export type OperationalPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export interface WorkflowHistoryItem {
+  id: string;
+  action: string;
+  field?: string | null;
+  old_value?: any;
+  new_value?: any;
+  actor: string;
+  timestamp: string;
+  notes?: string | null;
+}
+
+export interface StatusUpdatePayload {
+  status: OperationalStatus;
+  actor?: string;
+  notes?: string;
+}
+
+export interface PriorityUpdatePayload {
+  priority: OperationalPriority;
+  actor?: string;
+}
+
+export interface TagAddPayload {
+  tag: string;
+  actor?: string;
+}
+
+export interface AssigneeUpdatePayload {
+  assignee: string | null;
+  actor?: string;
 }
 
 

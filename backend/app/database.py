@@ -10,6 +10,52 @@ _engine = None
 _SessionLocal = None
 
 
+def upgrade_schema(engine):
+    """
+    Idempotent schema upgrade ensuring Phase 6 operational columns exist.
+    Safe for both PostgreSQL (Supabase) and SQLite.
+    """
+    if engine is None:
+        return
+    dialect = engine.dialect.name
+    if dialect == "postgresql":
+        statements = [
+            "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP WITH TIME ZONE;",
+            "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS operational_status VARCHAR(50) NOT NULL DEFAULT 'OPEN';",
+            "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS priority VARCHAR(20) NOT NULL DEFAULT 'MEDIUM';",
+            "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;",
+            "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS assignee VARCHAR(255);",
+            "ALTER TABLE incidents ADD COLUMN IF NOT EXISTS workflow_history JSONB DEFAULT '[]'::jsonb;",
+        ]
+        try:
+            with engine.connect() as conn:
+                for stmt in statements:
+                    conn.execute(text(stmt))
+                conn.commit()
+        except Exception:
+            pass
+    elif dialect == "sqlite":
+        try:
+            with engine.connect() as conn:
+                cols = [row[1] for row in conn.execute(text("PRAGMA table_info(incidents);")).fetchall()]
+                if cols:
+                    if "resolved_at" not in cols:
+                        conn.execute(text("ALTER TABLE incidents ADD COLUMN resolved_at DATETIME;"))
+                    if "operational_status" not in cols:
+                        conn.execute(text("ALTER TABLE incidents ADD COLUMN operational_status VARCHAR(50) DEFAULT 'OPEN';"))
+                    if "priority" not in cols:
+                        conn.execute(text("ALTER TABLE incidents ADD COLUMN priority VARCHAR(20) DEFAULT 'MEDIUM';"))
+                    if "tags" not in cols:
+                        conn.execute(text("ALTER TABLE incidents ADD COLUMN tags JSON DEFAULT '[]';"))
+                    if "assignee" not in cols:
+                        conn.execute(text("ALTER TABLE incidents ADD COLUMN assignee VARCHAR(255);"))
+                    if "workflow_history" not in cols:
+                        conn.execute(text("ALTER TABLE incidents ADD COLUMN workflow_history JSON DEFAULT '[]';"))
+                    conn.commit()
+        except Exception:
+            pass
+
+
 def get_engine():
     global _engine, _SessionLocal
     if _engine is None:
@@ -23,6 +69,7 @@ def get_engine():
             pool_recycle=300,
         )
         _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
+        upgrade_schema(_engine)
     return _engine
 
 

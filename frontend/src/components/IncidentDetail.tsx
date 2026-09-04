@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import type { InvestigationResult, IncidentRecord, IncidentNoteItem } from "../types";
+import type {
+  InvestigationResult,
+  IncidentRecord,
+  IncidentNoteItem,
+  OperationalStatus,
+  OperationalPriority,
+  WorkflowHistoryItem,
+} from "../types";
 import { EventTimeline } from "./EventTimeline";
 import { ClaimsPanel } from "./ClaimsPanel";
 import { ConfidenceGauge } from "./ConfidenceGauge";
@@ -12,6 +19,12 @@ import {
   reopenIncident,
   fetchIncidentNotes,
   createIncidentNote,
+  updateIncidentStatus,
+  updateIncidentPriority,
+  addIncidentTag,
+  removeIncidentTag,
+  updateIncidentAssignee,
+  fetchIncidentHistory,
 } from "../api/client";
 import {
   FileText,
@@ -24,6 +37,13 @@ import {
   ShieldCheck,
   Check,
   Share2,
+  Tag,
+  History,
+  X,
+  Plus,
+  Play,
+  AlertTriangle,
+  ArrowRight,
 } from "lucide-react";
 
 interface IncidentDetailProps {
@@ -33,6 +53,10 @@ interface IncidentDetailProps {
     incident_type?: string;
     title?: string;
     severity?: string;
+    priority?: string;
+    operational_status?: string;
+    tags?: string[];
+    assignee?: string | null;
     order_id?: string | null;
     resolved?: boolean;
     created_at?: string | null;
@@ -49,25 +73,57 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
   onSelectEvidence,
   onSelectPayment,
 }) => {
-  const [resolvedState, setResolvedState] = useState<boolean>(
-    Boolean(incidentMeta?.resolved)
-  );
-  const [isResolving, setIsResolving] = useState(false);
-  const [notes, setNotes] = useState<IncidentNoteItem[]>([]);
-  const [loadingNotes, setLoadingNotes] = useState(false);
-  const [newNoteText, setNewNoteText] = useState("");
-  const [authorName, setAuthorName] = useState("Investigator");
-  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
-  const [activeViewTab, setActiveViewTab] = useState<"overview" | "graph" | "timeline">("overview");
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
   const paymentId = investigationResult.payment_id;
   const orderId =
     incidentMeta?.order_id ||
     (typeof investigationResult.authoritative_result?.order_id === "string"
       ? investigationResult.authoritative_result.order_id
       : "order_" + paymentId.replace("pay_", ""));
+
+  // Operational State
+  const initialStatus = (
+    incidentMeta?.operational_status ||
+    (incidentMeta?.resolved ? "RESOLVED" : "OPEN")
+  ).toUpperCase() as OperationalStatus;
+
+  const [operationalStatus, setOperationalStatus] = useState<OperationalStatus>(initialStatus);
+  const [priority, setPriority] = useState<OperationalPriority>(
+    ((incidentMeta?.priority || "MEDIUM").toUpperCase() as OperationalPriority)
+  );
+  const [tags, setTags] = useState<string[]>(
+    Array.isArray(incidentMeta?.tags) ? incidentMeta.tags : []
+  );
+  const [assignee, setAssignee] = useState<string | null>(incidentMeta?.assignee || null);
+  const [workflowHistory, setWorkflowHistory] = useState<WorkflowHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Resolution modal & notes state
+  const [isResolutionModalOpen, setIsResolutionModalOpen] = useState(false);
+  const [resolutionNotesInput, setResolutionNotesInput] = useState(
+    "Verified and remediated via investigator console."
+  );
+  const [isResolving, setIsResolving] = useState(false);
+
+  // Inline edit state
+  const [isEditingAssignee, setIsEditingAssignee] = useState(false);
+  const [assigneeDraft, setAssigneeDraft] = useState(assignee || "");
+  const [newTagInput, setNewTagInput] = useState("");
+  const [isAddingTag, setIsAddingTag] = useState(false);
+
+  // Action status message
+  const [actionNotice, setActionNotice] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // Notes state
+  const [notes, setNotes] = useState<IncidentNoteItem[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [authorName, setAuthorName] = useState(assignee || "Investigator");
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+
+  // View tabs
+  const [activeViewTab, setActiveViewTab] = useState<"overview" | "history" | "graph" | "timeline">("overview");
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const incidents = Array.isArray(investigationResult.evidence_package?.incidents)
     ? (investigationResult.evidence_package.incidents as Array<{ incident_type: string; severity: string; description?: string }>)
@@ -92,23 +148,36 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
     investigationResult.investigation?.recommended_next_step ||
     "Verify why the merchant system did not record the capture. Check merchant logs, idempotency handling, or internal errors.";
 
-  // Fetch human investigator notes on mount or paymentId change
+  const showNotice = (message: string, type: "success" | "error" = "success") => {
+    setActionNotice({ message, type });
+    setTimeout(() => setActionNotice(null), 3500);
+  };
+
+  // Load Notes & Workflow History
   useEffect(() => {
     let isMounted = true;
-    async function loadNotes() {
+    async function loadOperationalData() {
       setLoadingNotes(true);
+      setLoadingHistory(true);
       try {
-        const fetchedNotes = await fetchIncidentNotes(paymentId);
+        const [fetchedNotes, fetchedHistory] = await Promise.all([
+          fetchIncidentNotes(paymentId),
+          fetchIncidentHistory(paymentId).catch(() => []),
+        ]);
         if (isMounted) {
           setNotes(fetchedNotes);
+          setWorkflowHistory(fetchedHistory);
         }
       } catch (err) {
-        console.warn("Could not load notes:", err);
+        console.warn("Could not load operational data:", err);
       } finally {
-        if (isMounted) setLoadingNotes(false);
+        if (isMounted) {
+          setLoadingNotes(false);
+          setLoadingHistory(false);
+        }
       }
     }
-    loadNotes();
+    loadOperationalData();
     return () => {
       isMounted = false;
     };
@@ -120,25 +189,107 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleToggleResolve = async () => {
+  // Status transitions
+  const handleTransitionStatus = async (newStatus: OperationalStatus, resolutionNotes?: string) => {
     setIsResolving(true);
     try {
-      if (resolvedState) {
+      if (newStatus === "RESOLVED") {
+        await resolveIncident(paymentId, resolutionNotes || resolutionNotesInput);
+      } else if (operationalStatus === "RESOLVED") {
         await reopenIncident(paymentId);
-        setResolvedState(false);
+        if (newStatus !== "OPEN") {
+          await updateIncidentStatus(paymentId, newStatus, authorName);
+        }
       } else {
-        await resolveIncident(paymentId, "Resolved by investigator via console");
-        setResolvedState(true);
+        await updateIncidentStatus(paymentId, newStatus, authorName);
       }
-    } catch (err) {
-      console.error("Resolution toggle failed:", err);
-      // Optimistic toggle fallback for unpersisted scenario payments
-      setResolvedState(!resolvedState);
+
+      setOperationalStatus(newStatus);
+      showNotice(`Operational status changed to ${newStatus}`);
+
+      // Refresh history
+      const updatedHistory = await fetchIncidentHistory(paymentId).catch(() => []);
+      setWorkflowHistory(updatedHistory);
+    } catch (err: any) {
+      console.error("Status transition failed:", err);
+      showNotice(err?.message || "Failed to update status", "error");
     } finally {
       setIsResolving(false);
+      setIsResolutionModalOpen(false);
     }
   };
 
+  // Priority change
+  const handleChangePriority = async (newPriority: OperationalPriority) => {
+    try {
+      await updateIncidentPriority(paymentId, newPriority, authorName);
+      setPriority(newPriority);
+      showNotice(`Triage priority updated to ${newPriority}`);
+      const updatedHistory = await fetchIncidentHistory(paymentId).catch(() => []);
+      setWorkflowHistory(updatedHistory);
+    } catch (err: any) {
+      console.error("Priority update failed:", err);
+      showNotice(err?.message || "Failed to update priority", "error");
+    }
+  };
+
+  // Add Tag
+  const handleAddTagSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanTag = newTagInput.trim().toLowerCase();
+    if (!cleanTag) return;
+
+    if (tags.includes(cleanTag)) {
+      showNotice(`Tag #${cleanTag} is already attached`, "error");
+      setNewTagInput("");
+      setIsAddingTag(false);
+      return;
+    }
+
+    try {
+      await addIncidentTag(paymentId, cleanTag, authorName);
+      setTags((prev) => [...prev, cleanTag]);
+      setNewTagInput("");
+      setIsAddingTag(false);
+      showNotice(`Tag #${cleanTag} added`);
+      const updatedHistory = await fetchIncidentHistory(paymentId).catch(() => []);
+      setWorkflowHistory(updatedHistory);
+    } catch (err: any) {
+      console.error("Tag addition failed:", err);
+      showNotice(err?.message || "Failed to add tag", "error");
+    }
+  };
+
+  // Remove Tag
+  const handleRemoveTag = async (tagToRemove: string) => {
+    try {
+      await removeIncidentTag(paymentId, tagToRemove, authorName);
+      setTags((prev) => prev.filter((t) => t !== tagToRemove));
+      showNotice(`Tag #${tagToRemove} removed`);
+      const updatedHistory = await fetchIncidentHistory(paymentId).catch(() => []);
+      setWorkflowHistory(updatedHistory);
+    } catch (err: any) {
+      console.error("Tag removal failed:", err);
+      showNotice(err?.message || "Failed to remove tag", "error");
+    }
+  };
+
+  // Assignee Save
+  const handleSaveAssignee = async (targetAssignee: string | null) => {
+    try {
+      await updateIncidentAssignee(paymentId, targetAssignee, authorName);
+      setAssignee(targetAssignee);
+      setIsEditingAssignee(false);
+      showNotice(targetAssignee ? `Assigned to ${targetAssignee}` : "Incident unassigned");
+      const updatedHistory = await fetchIncidentHistory(paymentId).catch(() => []);
+      setWorkflowHistory(updatedHistory);
+    } catch (err: any) {
+      console.error("Assignee update failed:", err);
+      showNotice(err?.message || "Failed to update assignee", "error");
+    }
+  };
+
+  // Notes submission
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNoteText.trim() || isSubmittingNote) return;
@@ -148,7 +299,8 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
       const added = await createIncidentNote(paymentId, newNoteText.trim(), authorName);
       setNotes((prev) => [added, ...prev]);
       setNewNoteText("");
-    } catch (err) {
+      showNotice("Annotation added successfully");
+    } catch (err: any) {
       console.warn("Saving note to backend failed, saving locally:", err);
       const fallbackNote: IncidentNoteItem = {
         id: `local_note_${Date.now()}`,
@@ -159,6 +311,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
       };
       setNotes((prev) => [fallbackNote, ...prev]);
       setNewNoteText("");
+      showNotice("Annotation saved locally", "success");
     } finally {
       setIsSubmittingNote(false);
     }
@@ -191,18 +344,46 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
     order_id: orderId,
     description: getIncidentTitle(),
     severity: primaryIncident.severity,
+    priority: priority,
+    operational_status: operationalStatus,
+    tags: tags,
+    assignee: assignee,
     evidence_ids: events.map((e, idx) => e.evidence_id || `evt_${idx + 1}`),
-    resolved: resolvedState,
+    resolved: operationalStatus === "RESOLVED",
     created_at: incidentMeta?.created_at || new Date().toISOString(),
   };
 
+  const isResolved = operationalStatus === "RESOLVED";
+
   return (
     <div className="space-y-6">
-      {/* ── Top Incident Identity Header ────────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
+      {/* ── Action Notice Banner ────────────────────────────────────────── */}
+      {actionNotice && (
+        <div
+          className={`p-3 rounded-xl border flex items-center justify-between text-xs font-medium transition shadow-xs ${
+            actionNotice.type === "success"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+              : "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Check className="w-4 h-4" />
+            <span>{actionNotice.message}</span>
+          </div>
+          <button
+            onClick={() => setActionNotice(null)}
+            className="text-slate-400 hover:text-slate-600 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* ── Top Incident Identity & Operational Control Header ───────────────────────── */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5 transition-colors">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1.5 max-w-3xl">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={onBack}
@@ -211,19 +392,51 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                 <span>←</span>
                 <span>Back</span>
               </button>
+
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 PAYMENT INCIDENT
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {resolvedState ? (
+
+              {/* Operational Status Badge */}
+              {isResolved ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                   <CheckCircle2 className="w-3 h-3" /> RESOLVED
                 </span>
-              ) : (
+              ) : operationalStatus === "INVESTIGATING" ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">
+                  <Clock className="w-3 h-3 animate-spin" style={{ animationDuration: "3s" }} /> INVESTIGATING
+                </span>
+              ) : operationalStatus === "ACTION_REQUIRED" ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                  <AlertTriangle className="w-3 h-3" /> ACTION REQUIRED
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30">
                   <AlertCircle className="w-3 h-3" /> OPEN
                 </span>
               )}
+
+              {/* Operational Priority Badge (Triage Urgency) */}
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                  priority === "CRITICAL"
+                    ? "bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40"
+                    : priority === "HIGH"
+                    ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                    : priority === "LOW"
+                    ? "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
+                    : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                }`}
+                title="Operational Urgency"
+              >
+                Urgency: {priority}
+              </span>
+
+              {/* Technical Severity Badge (System Impact) */}
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
+                System Severity: {primaryIncident.severity}
+              </span>
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -232,7 +445,56 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
           </div>
 
           {/* Right Action & Status Group */}
-          <div className="flex flex-wrap items-center gap-3 self-start">
+          <div className="flex flex-wrap items-center gap-2 self-start">
+            {/* Quick Action Buttons */}
+            {isResolved ? (
+              <button
+                type="button"
+                disabled={isResolving}
+                onClick={() => handleTransitionStatus("OPEN")}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Reopen Incident</span>
+              </button>
+            ) : (
+              <>
+                {operationalStatus !== "INVESTIGATING" && (
+                  <button
+                    type="button"
+                    disabled={isResolving}
+                    onClick={() => handleTransitionStatus("INVESTIGATING")}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Start Investigation</span>
+                  </button>
+                )}
+
+                {operationalStatus !== "ACTION_REQUIRED" && (
+                  <button
+                    type="button"
+                    disabled={isResolving}
+                    onClick={() => handleTransitionStatus("ACTION_REQUIRED")}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>Mark Action Required</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  disabled={isResolving}
+                  onClick={() => setIsResolutionModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Mark Resolved</span>
+                </button>
+              </>
+            )}
+
             {/* Export Report Button */}
             <button
               type="button"
@@ -242,56 +504,161 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
               <Share2 className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
               <span>Export Report</span>
             </button>
-
-            {/* Resolution Toggle Button */}
-            <button
-              type="button"
-              disabled={isResolving}
-              onClick={handleToggleResolve}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition shadow-xs cursor-pointer disabled:opacity-50 ${
-                resolvedState
-                  ? "bg-slate-700 hover:bg-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700"
-                  : "bg-emerald-600 hover:bg-emerald-500"
-              }`}
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>{isResolving ? "Updating..." : resolvedState ? "Reopen Incident" : "Mark Resolved"}</span>
-            </button>
           </div>
         </div>
 
-        {/* Monospace Metadata Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          {/* Payment ID Pill */}
-          <button
-            type="button"
-            onClick={() => handleCopy(paymentId, "payment_id")}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 text-xs font-mono font-medium hover:border-slate-400 dark:hover:border-slate-500 transition cursor-pointer"
-            title="Click to copy payment ID"
-          >
-            <span>{paymentId}</span>
-            <span className="text-slate-400 text-[10px]">
-              {copiedId === "payment_id" ? "✓" : "⎘"}
-            </span>
-          </button>
+        {/* ── Operational Metadata Bar (Priority, Assignee, Tags, Identifiers) ── */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs">
+          {/* Identifiers & Tags */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Payment ID Pill */}
+            <button
+              type="button"
+              onClick={() => handleCopy(paymentId, "payment_id")}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 font-mono font-medium hover:border-slate-400 transition cursor-pointer"
+              title="Click to copy payment ID"
+            >
+              <span>{paymentId}</span>
+              <span className="text-slate-400 text-[10px]">
+                {copiedId === "payment_id" ? "✓" : "⎘"}
+              </span>
+            </button>
 
-          {/* Order ID Pill */}
-          <button
-            type="button"
-            onClick={() => handleCopy(orderId, "order_id")}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 text-xs font-mono font-medium hover:border-slate-400 dark:hover:border-slate-500 transition cursor-pointer"
-            title="Click to copy order ID"
-          >
-            <span>{orderId}</span>
-            <span className="text-slate-400 text-[10px]">
-              {copiedId === "order_id" ? "✓" : "⎘"}
-            </span>
-          </button>
+            {/* Order ID Pill */}
+            <button
+              type="button"
+              onClick={() => handleCopy(orderId, "order_id")}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 font-mono font-medium hover:border-slate-400 transition cursor-pointer"
+              title="Click to copy order ID"
+            >
+              <span>{orderId}</span>
+              <span className="text-slate-400 text-[10px]">
+                {copiedId === "order_id" ? "✓" : "⎘"}
+              </span>
+            </button>
 
-          {/* Test Mode Badge */}
-          <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-xs font-medium">
-            Test Mode
-          </span>
+            {/* Priority Selector */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Priority:</span>
+              <select
+                value={priority}
+                onChange={(e) => handleChangePriority(e.target.value as OperationalPriority)}
+                className="bg-transparent border-none text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+            </div>
+
+            {/* Assignee Pill / Editor */}
+            {isEditingAssignee ? (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-indigo-500">
+                <User className="w-3 h-3 text-slate-400" />
+                <input
+                  type="text"
+                  value={assigneeDraft}
+                  onChange={(e) => setAssigneeDraft(e.target.value)}
+                  placeholder="Assignee name"
+                  className="bg-transparent text-xs text-slate-900 dark:text-slate-100 focus:outline-none w-28"
+                  autoFocus
+                />
+                <button
+                  onClick={() => handleSaveAssignee(assigneeDraft.trim() || null)}
+                  className="text-emerald-500 font-bold px-1 hover:text-emerald-400 cursor-pointer"
+                  title="Save"
+                >
+                  ✓
+                </button>
+                <button
+                  onClick={() => setIsEditingAssignee(false)}
+                  className="text-slate-400 px-1 hover:text-slate-200 cursor-pointer"
+                  title="Cancel"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => {
+                  setAssigneeDraft(assignee || "");
+                  setIsEditingAssignee(true);
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
+                title="Click to edit operational assignee (display metadata)"
+              >
+                <User className="w-3 h-3 text-slate-400" />
+                <span className={assignee ? "font-medium" : "text-slate-400 italic"}>
+                  {assignee ? `Assigned: ${assignee}` : "Unassigned"}
+                </span>
+                <span className="text-[10px] text-indigo-500 ml-1">✎</span>
+              </div>
+            )}
+          </div>
+
+          {/* Tags Chips & Add Tag */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+              <Tag className="w-3 h-3" />
+              <span>Tags:</span>
+            </span>
+
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono"
+              >
+                <span>#{t}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(t)}
+                  className="hover:text-rose-500 cursor-pointer"
+                  title={`Remove tag #${t}`}
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {isAddingTag ? (
+              <form onSubmit={handleAddTagSubmit} className="inline-flex items-center gap-1">
+                <input
+                  type="text"
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  placeholder="tag-name"
+                  className="px-2 py-0.5 text-[10px] font-mono rounded bg-slate-50 dark:bg-slate-950 border border-indigo-500 text-slate-800 dark:text-slate-200 focus:outline-none w-20"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="text-emerald-500 font-bold text-xs px-1 cursor-pointer"
+                >
+                  ✓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingTag(false);
+                    setNewTagInput("");
+                  }}
+                  className="text-slate-400 text-xs px-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAddingTag(true)}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-medium cursor-pointer transition"
+              >
+                <Plus className="w-2.5 h-2.5" />
+                <span>Add Tag</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -300,11 +667,11 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
         <MissingEvidenceCard report={investigationResult.missing_evidence_report} />
       )}
 
-      {/* ── View Tab Switcher (Overview / Traceability Graph / Event Timeline) ── */}
+      {/* ── View Tab Switcher (Overview / Workflow History / Traceability Graph / Event Timeline) ── */}
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
         <button
           onClick={() => setActiveViewTab("overview")}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
             activeViewTab === "overview"
               ? "bg-indigo-600 text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -315,8 +682,23 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveViewTab("history")}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+            activeViewTab === "history"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span>Workflow History</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-500/20 text-slate-300 font-mono">
+            {workflowHistory.length}
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveViewTab("graph")}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
             activeViewTab === "graph"
               ? "bg-indigo-600 text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -331,7 +713,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
 
         <button
           onClick={() => setActiveViewTab("timeline")}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
             activeViewTab === "timeline"
               ? "bg-indigo-600 text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -344,6 +726,66 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
           </span>
         </button>
       </div>
+
+      {/* ── View: Workflow History Tab ─────────────────────────────────────── */}
+      {activeViewTab === "history" && (
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                Auditable Operational History
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Cryptographically tracked lifecycle and status changes performed by human operators.
+              </p>
+            </div>
+            <span className="text-xs text-slate-400 font-mono">
+              {workflowHistory.length} audit entries
+            </span>
+          </div>
+
+          {loadingHistory ? (
+            <div className="py-8 text-center text-xs text-slate-400 italic">
+              Loading workflow history...
+            </div>
+          ) : workflowHistory.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400 italic">
+              No workflow changes recorded yet. Changes to status, priority, tags, or assignment will appear here.
+            </div>
+          ) : (
+            <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ml-3 space-y-4 pl-4 pt-2">
+              {workflowHistory.map((item) => (
+                <div key={item.id} className="relative space-y-1">
+                  <div className="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-indigo-500 border-2 border-white dark:border-slate-900" />
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-900 dark:text-slate-100 capitalize">
+                      {item.action.replace("_", " ")}
+                    </span>
+                    <span className="font-mono text-[10px] text-slate-400">
+                      {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Just now"}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-600 dark:text-slate-300 font-mono">
+                    {item.field ? `${item.field}: ` : ""}
+                    {item.old_value !== undefined && item.old_value !== null ? (
+                      <span className="line-through text-slate-400 mr-1.5">{String(item.old_value)}</span>
+                    ) : null}
+                    {item.new_value !== undefined && item.new_value !== null ? (
+                      <span className="font-bold text-indigo-600 dark:text-indigo-400">{String(item.new_value)}</span>
+                    ) : null}
+                  </p>
+
+                  <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                    <span>By: <strong className="text-slate-600 dark:text-slate-300 font-medium">{item.actor}</strong></span>
+                    {item.notes && <span className="italic">— "{item.notes}"</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── View: Interactive Graph Tab ─────────────────────────────────────── */}
       {activeViewTab === "graph" && (
@@ -387,7 +829,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                 </span>
                 <button
                   onClick={() => setActiveViewTab("graph")}
-                  className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                  className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                 >
                   Expand Full View →
                 </button>
@@ -447,10 +889,14 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                   onChange={(e) => setNewNoteText(e.target.value)}
                   placeholder="Add an investigator note, operational context, or merchant outreach status..."
                   rows={2}
+                  maxLength={2048}
                   className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
 
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400">
+                    {newNoteText.length}/2048 characters
+                  </span>
                   <button
                     type="submit"
                     disabled={!newNoteText.trim() || isSubmittingNote}
@@ -514,7 +960,11 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                   {String(investigationResult.evidence_package?.reconstructed_state || "authorized")}
                 </strong>
                 . Authoritative source rules evaluated the event stream and verified{" "}
-                {incidents.length} anomalies. Investigation concluded with{" "}
+                {incidents.length} anomalies. Operational status is{" "}
+                <strong className="font-semibold text-slate-900 dark:text-white uppercase">
+                  {operationalStatus}
+                </strong>
+                . Investigation concluded with{" "}
                 <strong className="font-semibold text-slate-900 dark:text-white">
                   {confidence.level}
                 </strong>{" "}
@@ -542,7 +992,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                 </h4>
                 <button
                   onClick={() => setActiveViewTab("timeline")}
-                  className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+                  className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium hover:underline cursor-pointer"
                 >
                   View timeline →
                 </button>
@@ -581,6 +1031,64 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
               paymentId={paymentId}
               onSelectPayment={onSelectPayment}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ── Operational Resolution Modal ────────────────────────────────────── */}
+      {isResolutionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Mark Incident Resolved
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsResolutionModalOpen(false)}
+                className="text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+              <strong>Important Truth Separation:</strong> Marking this incident operationally resolved records that investigation and triage are complete. It <em>does not</em> alter the underlying Razorpay payment state or execute financial actions.
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
+                Resolution Notes:
+              </label>
+              <textarea
+                value={resolutionNotesInput}
+                onChange={(e) => setResolutionNotesInput(e.target.value)}
+                placeholder="Describe resolution steps taken (e.g. merchant notified, webhook resent, log verified)..."
+                rows={3}
+                className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsResolutionModalOpen(false)}
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isResolving}
+                onClick={() => handleTransitionStatus("RESOLVED", resolutionNotesInput)}
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>{isResolving ? "Resolving..." : "Confirm Resolution"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

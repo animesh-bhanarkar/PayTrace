@@ -187,9 +187,15 @@ class Incident(Base):
         nullable=False,
     )
 
-    # Resolution
+    # Resolution & Operational Workflow (Phase 6)
     resolved = Column(Boolean, nullable=False, default=False)
     resolution_notes = Column(String(1024), nullable=True)
+    resolved_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    operational_status = Column(String(50), nullable=False, default="OPEN", index=True)
+    priority = Column(String(20), nullable=False, default="MEDIUM", index=True)
+    tags = Column(JSONB, nullable=True, default=list)
+    assignee = Column(String(255), nullable=True)
+    workflow_history = Column(JSONB, nullable=True, default=list)
 
 
 class AuditRecord(Base):

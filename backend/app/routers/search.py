@@ -54,6 +54,9 @@ def search_global(
                     Incident.order_id.ilike(pattern),
                     Incident.incident_type.ilike(pattern),
                     Incident.description.ilike(pattern),
+                    Incident.operational_status.ilike(pattern),
+                    Incident.priority.ilike(pattern),
+                    Incident.assignee.ilike(pattern),
                 )
             )
             .order_by(Incident.detected_at.desc())
@@ -62,6 +65,8 @@ def search_global(
         )
 
         for inc in incidents:
+            op_status = inc.operational_status or ("RESOLVED" if inc.resolved else "OPEN")
+            priority = inc.priority or "MEDIUM"
             results.append(
                 SearchResultItem(
                     id=str(inc.id),
@@ -72,9 +77,14 @@ def search_global(
                     order_id=inc.order_id,
                     timestamp=inc.detected_at.isoformat() if isinstance(inc.detected_at, datetime.datetime) else None,
                     severity=inc.severity,
-                    badge=inc.severity,
+                    badge=priority,
                     details={
                         "resolved": inc.resolved,
+                        "operational_status": op_status,
+                        "priority": priority,
+                        "severity": inc.severity,
+                        "assignee": inc.assignee or "Unassigned",
+                        "tags": inc.tags if isinstance(inc.tags, list) else [],
                         "evidence_ids": inc.evidence_ids or [],
                     },
                 )

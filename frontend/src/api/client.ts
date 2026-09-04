@@ -6,6 +6,9 @@ import type {
   IncidentNoteItem,
   SearchResultItem,
   NormalizedEventItem,
+  OperationalStatus,
+  OperationalPriority,
+  WorkflowHistoryItem,
 } from "../types";
 
 const BASE_URL = (
@@ -39,9 +42,33 @@ export async function replayScenario(scenarioId: string): Promise<ScenarioResult
   return res.json();
 }
 
-export async function fetchIncidents(limit = 50): Promise<IncidentRecord[]> {
+export async function fetchIncidents(
+  limitOrParams:
+    | number
+    | {
+        limit?: number;
+        severity?: string;
+        incident_type?: string;
+        operational_status?: string;
+        priority?: string;
+        tag?: string;
+        assignee?: string;
+      } = 50
+): Promise<IncidentRecord[]> {
   try {
-    const res = await fetch(`${BASE_URL}/incidents?limit=${limit}`);
+    const q = new URLSearchParams();
+    if (typeof limitOrParams === "number") {
+      q.set("limit", String(limitOrParams));
+    } else if (limitOrParams) {
+      if (limitOrParams.limit) q.set("limit", String(limitOrParams.limit));
+      if (limitOrParams.severity && limitOrParams.severity !== "ALL") q.set("severity", limitOrParams.severity);
+      if (limitOrParams.incident_type && limitOrParams.incident_type !== "ALL") q.set("incident_type", limitOrParams.incident_type);
+      if (limitOrParams.operational_status && limitOrParams.operational_status !== "ALL") q.set("operational_status", limitOrParams.operational_status);
+      if (limitOrParams.priority && limitOrParams.priority !== "ALL") q.set("priority", limitOrParams.priority);
+      if (limitOrParams.tag && limitOrParams.tag !== "ALL") q.set("tag", limitOrParams.tag);
+      if (limitOrParams.assignee && limitOrParams.assignee !== "ALL") q.set("assignee", limitOrParams.assignee);
+    }
+    const res = await fetch(`${BASE_URL}/incidents?${q.toString()}`);
     if (!res.ok) return [];
     return await res.json();
   } catch {
@@ -287,6 +314,107 @@ export async function fetchPatternDetail(
   patternId: string
 ): Promise<import("../types").PatternSummaryItem> {
   const res = await fetch(`${BASE_URL}/patterns/${encodeURIComponent(patternId)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// --- PHASE 6: OPERATIONAL WORKFLOW API METHODS ---
+
+export async function updateIncidentStatus(
+  paymentIdOrId: string,
+  status: OperationalStatus,
+  actor = "Local operator",
+  notes?: string
+): Promise<IncidentRecord> {
+  const res = await fetch(`${BASE_URL}/incidents/${encodeURIComponent(paymentIdOrId)}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status, actor, notes }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function updateIncidentPriority(
+  paymentIdOrId: string,
+  priority: OperationalPriority,
+  actor = "Local operator"
+): Promise<IncidentRecord> {
+  const res = await fetch(`${BASE_URL}/incidents/${encodeURIComponent(paymentIdOrId)}/priority`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ priority, actor }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function addIncidentTag(
+  paymentIdOrId: string,
+  tag: string,
+  actor = "Local operator"
+): Promise<IncidentRecord> {
+  const res = await fetch(`${BASE_URL}/incidents/${encodeURIComponent(paymentIdOrId)}/tags`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tag, actor }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function removeIncidentTag(
+  paymentIdOrId: string,
+  tag: string,
+  actor = "Local operator"
+): Promise<IncidentRecord> {
+  const q = new URLSearchParams({ actor });
+  const res = await fetch(
+    `${BASE_URL}/incidents/${encodeURIComponent(paymentIdOrId)}/tags/${encodeURIComponent(tag)}?${q.toString()}`,
+    {
+      method: "DELETE",
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function updateIncidentAssignee(
+  paymentIdOrId: string,
+  assignee: string | null,
+  actor = "Local operator"
+): Promise<IncidentRecord> {
+  const res = await fetch(`${BASE_URL}/incidents/${encodeURIComponent(paymentIdOrId)}/assignee`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assignee, actor }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchIncidentHistory(
+  paymentIdOrId: string
+): Promise<WorkflowHistoryItem[]> {
+  const res = await fetch(`${BASE_URL}/incidents/${encodeURIComponent(paymentIdOrId)}/history`);
   if (!res.ok) {
     const err = await res.json().catch(() => null);
     throw new Error(err?.detail || `HTTP ${res.status}`);
