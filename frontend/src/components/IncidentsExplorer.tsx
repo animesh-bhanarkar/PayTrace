@@ -138,27 +138,31 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
     switch (opStatus) {
       case "RESOLVED":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 className="w-3 h-3" /> RESOLVED
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+            <span>RESOLVED</span>
           </span>
         );
       case "INVESTIGATING":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-            <Clock className="w-3 h-3 animate-spin" style={{ animationDuration: "3s" }} /> INVESTIGATING
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+            <Clock className="w-3 h-3 text-indigo-500 animate-spin shrink-0" style={{ animationDuration: "3s" }} />
+            <span>INVESTIGATING</span>
           </span>
         );
       case "ACTION_REQUIRED":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <AlertTriangle className="w-3 h-3" /> ACTION REQUIRED
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+            <span>ACTION REQUIRED</span>
           </span>
         );
       case "OPEN":
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
-            <AlertCircle className="w-3 h-3" /> OPEN
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+            <AlertCircle className="w-3 h-3 text-slate-400 shrink-0" />
+            <span>OPEN</span>
           </span>
         );
     }
@@ -168,26 +172,26 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
     switch (priority.toUpperCase()) {
       case "CRITICAL":
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 uppercase">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase">
             ⚡ CRITICAL
           </span>
         );
       case "HIGH":
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase">
+          <span className="inline-flex items-center text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase">
             HIGH
           </span>
         );
       case "MEDIUM":
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 uppercase">
+          <span className="inline-flex items-center text-[11px] font-medium text-blue-600 dark:text-blue-400 uppercase">
             MEDIUM
           </span>
         );
       case "LOW":
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 uppercase">
+          <span className="inline-flex items-center text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase">
             LOW
           </span>
         );
@@ -425,14 +429,14 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
-                  <th className="py-3 px-4">Incident Identity</th>
-                  <th className="py-3 px-4">Payment & Order ID</th>
-                  <th className="py-3 px-4">Operational Status</th>
-                  <th className="py-3 px-4">Urgency & Severity</th>
-                  <th className="py-3 px-4">Tags & Assignee</th>
-                  <th className="py-3 px-4">Detected</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
+                  <th className="py-2.5 px-4">Incident Identity</th>
+                  <th className="py-2.5 px-4">Payment & Order ID</th>
+                  <th className="py-2.5 px-4">Operational Status</th>
+                  <th className="py-2.5 px-4">Urgency & Severity</th>
+                  <th className="py-2.5 px-4">Tags & Assignee</th>
+                  <th className="py-2.5 px-4">Detected</th>
+                  <th className="py-2.5 px-4 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -454,7 +458,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                     return (
                       <tr
                         key={inc.id}
-                        className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/15 transition group cursor-pointer"
+                        className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer"
                         onClick={() =>
                           onSelectIncident(paymentId, {
                             id: inc.id,
@@ -470,20 +474,20 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                           })
                         }
                       >
-                        {/* 1. Incident Identity & Description */}
-                        <td className="py-3.5 px-4">
+                        {/* 1. PRIMARY: Incident Identity & Description */}
+                        <td className="py-2.5 px-4">
                           <div className="space-y-0.5 max-w-xs">
-                            <span className="font-semibold text-slate-900 dark:text-white text-xs group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors block truncate">
+                            <span className="font-bold text-slate-900 dark:text-white text-xs group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors block truncate">
                               {inc.incident_type}
                             </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 leading-snug">
                               {inc.description}
                             </span>
                           </div>
                         </td>
 
-                        {/* 2. Payment & Order IDs */}
-                        <td className="py-3.5 px-4 font-mono text-[11px]">
+                        {/* 2. PRIMARY: Payment & Order IDs */}
+                        <td className="py-2.5 px-4 font-mono text-[11px]">
                           <span className="text-indigo-600 dark:text-indigo-400 font-semibold block truncate max-w-[150px]">
                             {paymentId}
                           </span>
@@ -492,76 +496,47 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                           </span>
                         </td>
 
-                        {/* 3. Operational Status */}
-                        <td className="py-3.5 px-4 whitespace-nowrap">
+                        {/* 3. SECONDARY: Operational Status */}
+                        <td className="py-2.5 px-4 whitespace-nowrap">
                           {getStatusBadge(opStatus)}
                         </td>
 
-                        {/* 4. Priority (Urgency) & Technical Severity (Impact) */}
-                        <td className="py-3.5 px-4 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5">
+                        {/* 4. SECONDARY: Priority (Urgency) & Technical Severity (Impact) */}
+                        <td className="py-2.5 px-4 whitespace-nowrap">
+                          <div className="space-y-0.5">
+                            <div>
                               {getPriorityBadge(priority)}
                             </div>
-                            <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                              <span className="text-slate-400 dark:text-slate-500">Impact:</span>
-                              <span
-                                className={`font-bold ${
-                                  techSeverity === "HIGH"
-                                    ? "text-rose-600 dark:text-rose-400"
-                                    : techSeverity === "MEDIUM"
-                                    ? "text-amber-600 dark:text-amber-400"
-                                    : "text-slate-600 dark:text-slate-300"
-                                }`}
-                              >
-                                {techSeverity}
-                              </span>
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                              impact: <span className="font-medium text-slate-600 dark:text-slate-400">{techSeverity.toLowerCase()}</span>
                             </div>
                           </div>
                         </td>
 
-                        {/* 5. Tags & Assignee */}
-                        <td className="py-3.5 px-4">
-                          <div className="space-y-1.5 max-w-[200px]">
-                            {/* Assignee indicator */}
-                            <div className="flex items-center gap-1.5 text-[11px]">
+                        {/* 5. TERTIARY: Tags & Assignee */}
+                        <td className="py-2.5 px-4">
+                          <div className="space-y-0.5 max-w-[180px]">
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 truncate">
                               <User className="w-3 h-3 text-slate-400 shrink-0" />
                               <span
                                 className={`truncate ${
                                   assignee
-                                    ? "text-slate-800 dark:text-slate-200 font-medium"
-                                    : "text-slate-400 dark:text-slate-500 italic"
+                                    ? "font-medium text-slate-700 dark:text-slate-300"
+                                    : "italic text-slate-400 dark:text-slate-500"
                                 }`}
                               >
                                 {assignee || "Unassigned"}
                               </span>
                             </div>
 
-                            {/* Tags list */}
-                            {tags.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {tags.slice(0, 3).map((t) => (
-                                  <span
-                                    key={t}
-                                    className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono"
-                                  >
-                                    #{t}
-                                  </span>
-                                ))}
-                                {tags.length > 3 && (
-                                  <span className="text-[10px] text-slate-400 font-mono">
-                                    +{tags.length - 3}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-slate-400 italic">No tags</span>
-                            )}
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate">
+                              {tags.length > 0 ? tags.map((t) => `#${t}`).join(" ") : <span className="italic">no tags</span>}
+                            </div>
                           </div>
                         </td>
 
-                        {/* 6. Detected / Last Updated */}
-                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        {/* 6. SECONDARY: Detected / Last Updated */}
+                        <td className="py-2.5 px-4 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {inc.detected_at
                             ? new Date(inc.detected_at).toLocaleDateString("en-GB", {
                                 day: "2-digit",
@@ -578,13 +553,13 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                         </td>
 
                         {/* 7. Action */}
-                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <td className="py-2.5 px-4 text-right whitespace-nowrap">
                           <button
                             type="button"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-medium transition shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition group-hover:translate-x-0.5 cursor-pointer"
                           >
                             <span>Investigate</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
                           </button>
                         </td>
                       </tr>
