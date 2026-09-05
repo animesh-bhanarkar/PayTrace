@@ -37,23 +37,29 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
     loadData();
   }, []);
 
-  const claims = (data?.claims || []).filter((c) => c.statement.trim() !== "");
+  const claims = (data?.claims || []).filter(
+    (c) => Boolean(c && typeof c.statement === "string" && c.statement.trim() !== "")
+  );
 
   const filteredClaims = claims.filter((c) => {
     if (verdictFilter !== "ALL" && c.verdict !== verdictFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
-        c.claim_id.toLowerCase().includes(q) ||
-        c.statement.toLowerCase().includes(q) ||
-        c.payment_id.toLowerCase().includes(q) ||
-        c.evidence_ids.some((eid) => eid.toLowerCase().includes(q))
+        (c.claim_id || "").toLowerCase().includes(q) ||
+        (c.statement || "").toLowerCase().includes(q) ||
+        (c.payment_id || "").toLowerCase().includes(q) ||
+        (Array.isArray(c.evidence_ids) &&
+          c.evidence_ids.some((eid) => (eid || "").toLowerCase().includes(q)))
       );
     }
     return true;
   });
 
-  const ratePercent = data ? Math.round(data.verification_rate * 100) : 0;
+  const ratePercent =
+    data && typeof data.verification_rate === "number" && !isNaN(data.verification_rate)
+      ? Math.round(data.verification_rate * 100)
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -87,7 +93,7 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
               Total AI Claims
             </div>
             <div className="text-2xl font-bold text-slate-100 font-mono">
-              {data.total_claims}
+              {data.total_claims ?? 0}
             </div>
           </div>
 
@@ -96,7 +102,7 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
               Supported & Verified
             </div>
             <div className="text-2xl font-bold text-emerald-300 font-mono">
-              {data.verified_claims}
+              {data.verified_claims ?? 0}
             </div>
           </div>
 
@@ -105,7 +111,7 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
               Rejected (Unsubstantiated)
             </div>
             <div className="text-2xl font-bold text-rose-300 font-mono">
-              {data.rejected_claims}
+              {data.rejected_claims ?? 0}
             </div>
           </div>
 
@@ -114,7 +120,7 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
               Unverifiable
             </div>
             <div className="text-2xl font-bold text-amber-300 font-mono">
-              {data.unverifiable_claims}
+              {data.unverifiable_claims ?? 0}
             </div>
           </div>
 
@@ -206,20 +212,22 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
         <div className="space-y-3">
           {filteredClaims.map((claim, idx) => (
             <div
-              key={`${claim.payment_id}_${claim.claim_id}_${idx}`}
+              key={`${claim.payment_id || "pay"}_${claim.claim_id || "cid"}_${idx}`}
               className="bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-4 transition-all"
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
-                    {claim.claim_id}
+                    {claim.claim_id || "CLAIM"}
                   </span>
-                  <button
-                    onClick={() => onSelectPayment(claim.payment_id)}
-                    className="font-mono text-xs text-blue-400 hover:underline"
-                  >
-                    {claim.payment_id}
-                  </button>
+                  {claim.payment_id ? (
+                    <button
+                      onClick={() => onSelectPayment(claim.payment_id)}
+                      className="font-mono text-xs text-blue-400 hover:underline"
+                    >
+                      {claim.payment_id}
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -240,6 +248,10 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
                     {claim.verdict === "SUPPORTED" && "✓ SUPPORTED"}
                     {claim.verdict === "REJECTED" && "✕ REJECTED"}
                     {claim.verdict === "UNVERIFIABLE" && "⚠ UNVERIFIABLE"}
+                    {claim.verdict !== "SUPPORTED" &&
+                      claim.verdict !== "REJECTED" &&
+                      claim.verdict !== "UNVERIFIABLE" &&
+                      (claim.verdict || "RECORDED")}
                   </span>
                 </div>
               </div>
@@ -260,7 +272,7 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
               {/* Evidence Grounding */}
               <div className="flex flex-wrap items-center gap-2 text-xs pt-2 border-t border-slate-800/60">
                 <span className="text-slate-400">Cited Evidence:</span>
-                {claim.evidence_ids && claim.evidence_ids.length > 0 ? (
+                {Array.isArray(claim.evidence_ids) && claim.evidence_ids.length > 0 ? (
                   claim.evidence_ids.map((eid) => (
                     <button
                       key={eid}
