@@ -10,6 +10,7 @@ from app.config import settings
 from app.database import get_db, get_engine, check_db_connection, Base
 from app.models import SystemProbe, WebhookEvent  # noqa: F401 — ensure all models are registered
 from app.routers import webhooks, investigations, scenarios, incidents, search, events, evidence, patterns, live, mcp
+from app.gemini_investigator import MODEL_NAME as _GEMINI_MODEL, FALLBACK_MODEL_NAME as _GEMINI_FALLBACK
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("paytrace")
@@ -91,6 +92,10 @@ def health():
         "database": db_status,
         "webhook_secret_configured": bool(settings.RAZORPAY_WEBHOOK_SECRET),
         "allowed_origins": allowed_origins,
+        # Non-secret AI configuration — model identifiers only, no API keys
+        "gemini_primary_model": _GEMINI_MODEL,
+        "gemini_fallback_model": _GEMINI_FALLBACK,
+        "schema_enforcement": "response_schema via GenerateContentConfig",
     }
 
 

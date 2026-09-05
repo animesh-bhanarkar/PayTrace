@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import type { AiConfig } from "../api/client";
 import type { IncidentRecord, ScenarioFixtureItem, NavigationTab } from "../types";
 import {
   ShieldCheck,
@@ -22,6 +23,7 @@ interface OverviewDashboardProps {
   onHeroSearch: (query: string) => void;
   demoMode?: boolean;
   onReplayScenario?: (scenarioId: string) => void;
+  aiConfig: AiConfig;
 }
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
@@ -32,6 +34,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   onHeroSearch,
   demoMode = false,
   onReplayScenario,
+  aiConfig,
 }) => {
   const [searchPid, setSearchPid] = useState("");
 
@@ -220,7 +223,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               <span className="text-xs font-bold text-slate-900 dark:text-white">
-                Gemini 2.5 Flash Engine
+                {aiConfig.primaryModel}
               </span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">

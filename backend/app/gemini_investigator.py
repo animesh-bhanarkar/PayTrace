@@ -26,7 +26,25 @@ from typing import Dict, Any
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
+FALLBACK_MODEL_NAME = "gemini-3.5-flash-lite"
+
+
+def get_client() -> genai.Client | None:
+    """Return the initialized GenAI client, lazily initializing if needed."""
+    global client
+    if client is not None:
+        return client
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        try:
+            from app.config import settings
+            api_key = settings.GEMINI_API_KEY
+        except Exception:
+            pass
+    if api_key:
+        client = genai.Client(api_key=api_key)
+    return client
 
 # ── Phase 1-7 schema (preserved exactly) ─────────────────────────────────────
 
@@ -117,35 +135,41 @@ Rules you must follow:
 
 
 def investigate(evidence_package: Dict[str, Any]) -> Dict[str, Any]:
-    if client is None:
+    c = get_client()
+    if c is None:
         return {"error": "gemini_unavailable", "detail": "GEMINI_API_KEY not set"}
 
-    try:
-        user_message = (
-            f"Investigate this payment incident:\n{json.dumps(evidence_package, indent=2)}"
-        )
+    user_message = (
+        f"Investigate this payment incident:\n{json.dumps(evidence_package, indent=2)}"
+    )
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=user_message,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                temperature=0.1,
-                response_mime_type="application/json",
-                response_schema=_INVESTIGATION_SCHEMA,
-            ),
-        )
-
-        response_text = response.text
-
+    for current_model in [MODEL_NAME, FALLBACK_MODEL_NAME]:
         try:
-            parsed = json.loads(response_text)
-            return parsed
-        except json.JSONDecodeError:
-            return {"error": "structured_output_failure", "raw": response_text}
+            response = c.models.generate_content(
+                model=current_model,
+                contents=user_message,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    temperature=0.1,
+                    response_mime_type="application/json",
+                    response_schema=_INVESTIGATION_SCHEMA,
+                ),
+            )
 
-    except Exception as e:
-        return {"error": "gemini_unavailable", "detail": str(e)}
+            response_text = response.text
+
+            try:
+                parsed = json.loads(response_text)
+                return parsed
+            except json.JSONDecodeError:
+                return {"error": "structured_output_failure", "raw": response_text}
+
+        except Exception as e:
+            if current_model == MODEL_NAME and MODEL_NAME != FALLBACK_MODEL_NAME:
+                continue
+            return {"error": "gemini_unavailable", "detail": str(e)}
+
+    return {"error": "gemini_unavailable", "detail": "All configured Gemini models failed"}
 
 
 # ── Phase 8 advanced schema ───────────────────────────────────────────────────
@@ -424,7 +448,8 @@ def investigate_advanced(evidence_package: Dict[str, Any]) -> Dict[str, Any]:
     Returns a structured dict conforming to the advanced investigation schema,
     or an error dict with key 'error' if Gemini is unavailable or fails.
     """
-    if client is None:
+    c = get_client()
+    if c is None:
         return {
             "error": "gemini_unavailable",
             "detail": "GEMINI_API_KEY not set",
@@ -433,49 +458,56 @@ def investigate_advanced(evidence_package: Dict[str, Any]) -> Dict[str, Any]:
 
     start_time = time.perf_counter()
 
-    try:
-        # Build a compact, sanitized user message.
-        # Do NOT send raw payloads — only structured evidence fields.
-        user_message = (
-            "Conduct an advanced payment incident investigation for the following "
-            "evidence package. Follow all rules in your system instructions.\n\n"
-            f"{json.dumps(evidence_package, indent=2, default=str)}"
-        )
+    user_message = (
+        "Conduct an advanced payment incident investigation for the following "
+        "evidence package. Follow all rules in your system instructions.\n\n"
+        f"{json.dumps(evidence_package, indent=2, default=str)}"
+    )
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=user_message,
-            config=types.GenerateContentConfig(
-                system_instruction=_ADVANCED_SYSTEM_PROMPT,
-                temperature=0.1,
-                response_mime_type="application/json",
-                response_schema=_ADVANCED_INVESTIGATION_SCHEMA,
-            ),
-        )
-
-        duration_ms = (time.perf_counter() - start_time) * 1000
-        response_text = response.text
-
+    for current_model in [MODEL_NAME, FALLBACK_MODEL_NAME]:
         try:
-            parsed = json.loads(response_text)
-            parsed["_duration_ms"] = round(duration_ms, 1)
-            parsed["_model"] = MODEL_NAME
-            return parsed
-        except json.JSONDecodeError:
+            response = c.models.generate_content(
+                model=current_model,
+                contents=user_message,
+                config=types.GenerateContentConfig(
+                    system_instruction=_ADVANCED_SYSTEM_PROMPT,
+                    temperature=0.1,
+                    response_mime_type="application/json",
+                    response_schema=_ADVANCED_INVESTIGATION_SCHEMA,
+                ),
+            )
+
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            response_text = response.text
+
+            try:
+                parsed = json.loads(response_text)
+                parsed["_duration_ms"] = round(duration_ms, 1)
+                parsed["_model"] = current_model
+                return parsed
+            except json.JSONDecodeError:
+                return {
+                    "error": "structured_output_failure",
+                    "raw": response_text[:500],  # bounded; never log full sensitive content
+                    "duration_ms": round(duration_ms, 1),
+                }
+
+        except Exception as e:
+            if current_model == MODEL_NAME and MODEL_NAME != FALLBACK_MODEL_NAME:
+                continue
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            error_message = str(e)
+            # Never leak API key or webhook secret in error messages
+            if "api_key" in error_message.lower() or "secret" in error_message.lower():
+                error_message = "Authentication or configuration error (details redacted)"
             return {
-                "error": "structured_output_failure",
-                "raw": response_text[:500],  # bounded; never log full sensitive content
+                "error": "gemini_unavailable",
+                "detail": error_message,
                 "duration_ms": round(duration_ms, 1),
             }
 
-    except Exception as e:
-        duration_ms = (time.perf_counter() - start_time) * 1000
-        error_message = str(e)
-        # Never leak API key or webhook secret in error messages
-        if "api_key" in error_message.lower() or "secret" in error_message.lower():
-            error_message = "Authentication or configuration error (details redacted)"
-        return {
-            "error": "gemini_unavailable",
-            "detail": error_message,
-            "duration_ms": round(duration_ms, 1),
-        }
+    return {
+        "error": "gemini_unavailable",
+        "detail": "All configured Gemini models failed",
+        "duration_ms": 0,
+    }

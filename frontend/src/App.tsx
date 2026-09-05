@@ -21,6 +21,8 @@ import {
   replayScenario,
   fetchIncidents,
   fetchScenarios,
+  fetchAiConfig,
+  type AiConfig,
 } from "./api/client";
 import type {
   NavigationTab,
@@ -53,6 +55,11 @@ function PayTraceApp() {
   // Data state
   const [incidentsList, setIncidentsList] = useState<IncidentRecord[]>([]);
   const [scenariosList, setScenariosList] = useState<ScenarioFixtureItem[]>([]);
+  const [aiConfig, setAiConfig] = useState<AiConfig>({
+    primaryModel: "gemini-3.7-flash",
+    fallbackModel: "gemini-3.5-flash-lite",
+    schemaEnforcement: "response_schema via GenerateContentConfig",
+  });
   const [loadingData, setLoadingData] = useState(false);
 
   // Active Incident Detail state
@@ -74,12 +81,14 @@ function PayTraceApp() {
     async function loadInitialData() {
       setLoadingData(true);
       try {
-        const [incidents, scenarios] = await Promise.all([
+        const [incidents, scenarios, cfg] = await Promise.all([
           fetchIncidents(50),
           fetchScenarios(),
+          fetchAiConfig(),
         ]);
         setIncidentsList(incidents);
         setScenariosList(scenarios);
+        setAiConfig(cfg);
       } catch (err) {
         console.warn("Failed to load background data:", err);
       } finally {
@@ -329,6 +338,7 @@ function PayTraceApp() {
               onHeroSearch={handleHeroSearch}
               demoMode={demoMode}
               onReplayScenario={handleReplayScenario}
+              aiConfig={aiConfig}
             />
           ) : activeTab === "incidents" ? (
             /* VIEW: Incidents Explorer */
@@ -420,7 +430,7 @@ function PayTraceApp() {
             <IntegrationsView />
           ) : activeTab === "settings" ? (
             /* VIEW: Settings */
-            <SettingsView />
+            <SettingsView aiConfig={aiConfig} />
           ) : null}
         </main>
       </div>

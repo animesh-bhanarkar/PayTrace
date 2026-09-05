@@ -96,6 +96,36 @@ export async function fetchHealth(): Promise<Record<string, unknown> | null> {
   }
 }
 
+/** Non-secret AI configuration derived from the backend /health response. */
+export interface AiConfig {
+  primaryModel: string;
+  fallbackModel: string;
+  schemaEnforcement: string;
+}
+
+const DEFAULT_AI_CONFIG: AiConfig = {
+  primaryModel: "gemini-3.7-flash",
+  fallbackModel: "gemini-3.5-flash-lite",
+  schemaEnforcement: "response_schema via GenerateContentConfig",
+};
+
+export async function fetchAiConfig(): Promise<AiConfig> {
+  try {
+    const res = await fetch(`${BASE_URL}/health`);
+    if (!res.ok) return DEFAULT_AI_CONFIG;
+    const data = await res.json();
+    return {
+      primaryModel: (data.gemini_primary_model as string) || DEFAULT_AI_CONFIG.primaryModel,
+      fallbackModel: (data.gemini_fallback_model as string) || DEFAULT_AI_CONFIG.fallbackModel,
+      schemaEnforcement:
+        (data.schema_enforcement as string) || DEFAULT_AI_CONFIG.schemaEnforcement,
+    };
+  } catch {
+    return DEFAULT_AI_CONFIG;
+  }
+}
+
+
 export async function resolveIncident(
   paymentId: string,
   resolutionNotes = "Resolved via investigator console"

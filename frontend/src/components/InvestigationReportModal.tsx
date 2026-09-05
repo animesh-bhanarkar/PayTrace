@@ -251,7 +251,7 @@ export const InvestigationReportModal: React.FC<InvestigationReportModalProps> =
           <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
               <Cpu className="w-4 h-4 text-indigo-400" />
-              4. AI Root Cause Investigation (Gemini 2.5 Flash)
+              4. AI Root Cause Investigation (Gemini AI)
             </h3>
             <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800 space-y-3">
               <div>

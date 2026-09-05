@@ -1,4 +1,5 @@
 import React from "react";
+import type { AiConfig } from "../api/client";
 import {
   Settings,
   Cpu,
@@ -6,7 +7,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-export const SettingsView: React.FC = () => {
+interface SettingsViewProps {
+  aiConfig: AiConfig;
+}
+
+export const SettingsView: React.FC<SettingsViewProps> = ({ aiConfig }) => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* ── Header ────────────────────────────────────────────────────────── */}
@@ -33,7 +38,7 @@ export const SettingsView: React.FC = () => {
           <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 space-y-1">
             <div className="text-[10px] uppercase font-semibold text-slate-400">Target Model</div>
             <div className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-              gemini-3.6-flash (Google GenAI SDK)
+              {aiConfig.primaryModel} (Google GenAI SDK)
             </div>
           </div>
 
