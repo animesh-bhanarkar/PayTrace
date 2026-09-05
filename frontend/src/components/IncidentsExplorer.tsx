@@ -138,26 +138,26 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
     switch (opStatus) {
       case "RESOLVED":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <CheckCircle2 className="w-3 h-3" /> RESOLVED
           </span>
         );
       case "INVESTIGATING":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
             <Clock className="w-3 h-3 animate-spin" style={{ animationDuration: "3s" }} /> INVESTIGATING
           </span>
         );
       case "ACTION_REQUIRED":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
             <AlertTriangle className="w-3 h-3" /> ACTION REQUIRED
           </span>
         );
       case "OPEN":
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
             <AlertCircle className="w-3 h-3" /> OPEN
           </span>
         );
@@ -168,26 +168,26 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
     switch (priority.toUpperCase()) {
       case "CRITICAL":
         return (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40 uppercase">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 uppercase">
             ⚡ CRITICAL
           </span>
         );
       case "HIGH":
         return (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase">
             HIGH
           </span>
         );
       case "MEDIUM":
         return (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20 uppercase">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 uppercase">
             MEDIUM
           </span>
         );
       case "LOW":
       default:
         return (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 uppercase">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 uppercase">
             LOW
           </span>
         );
@@ -266,17 +266,17 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
         </div>
       </div>
 
-      {/* ── Navigation & Operational Filters Bar ───────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
+      {/* ── Supporting Navigation & Operational Filters Bar ────────────────────────── */}
+      <div className="bg-slate-50/70 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-3 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Source Tabs */}
-          <div className="flex items-center gap-2 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 self-start">
+          <div className="flex items-center gap-2 p-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 self-start">
             <button
               type="button"
               onClick={() => setTabMode("database")}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
                 tabMode === "database"
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs"
+                  ? "bg-slate-900 dark:bg-slate-950 text-white shadow-2xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -287,7 +287,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
               onClick={() => setTabMode("scenarios")}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
                 tabMode === "scenarios"
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs"
+                  ? "bg-slate-900 dark:bg-slate-950 text-white shadow-2xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -311,7 +311,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                 placeholder="Search Payment ID, Order ID, type, tag, assignee..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full pl-9 pr-4 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
               <span className="absolute left-3 top-2.5 text-slate-400 text-xs">⌕</span>
             </div>
@@ -321,7 +321,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 title="Filter by Operational Status"
               >
                 <option value="ALL">All Statuses</option>
@@ -337,7 +337,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 title="Filter by Operational Priority (Triage Urgency)"
               >
                 <option value="ALL">All Priorities</option>
@@ -353,7 +353,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
               <select
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
-                className="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 title="Filter by Technical Severity (System Impact)"
               >
                 <option value="ALL">All Severities</option>
@@ -368,7 +368,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
               <select
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
-                className="w-full px-2.5 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 title="Filter by Operational Tag"
               >
                 <option value="ALL">All Tags</option>
@@ -381,14 +381,14 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
             </div>
 
             {/* Webhook Only Toggle */}
-            <div className="sm:col-span-12 flex items-center justify-between pt-1">
+            <div className="sm:col-span-12 flex items-center justify-between pt-0.5">
               <button
                 type="button"
                 onClick={() => setWebhookOnly(!webhookOnly)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer border ${
                   webhookOnly
                     ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400"
                 }`}
               >
                 <span>⚡ Webhook Anomalies Only</span>
@@ -399,17 +399,37 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
         )}
       </div>
 
-      {/* ── Incidents Table / Scenario Cards ────────────────────────────────────────── */}
-      {tabMode === "database" ? (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors">
+      {/* ── Primary Incidents Workspace ────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        {/* Visually Distinct but Restrained Workspace Header */}
+        <div className="px-5 py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+              {tabMode === "database" ? "Payment Incident Records" : "Demo Golden Scenarios"}
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              {tabMode === "database"
+                ? `${filteredIncidents.length} ${filteredIncidents.length === 1 ? "record" : "records"}`
+                : `${filteredScenarios.length} scenarios`}
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+            {tabMode === "database"
+              ? "Primary audit stream of detected payment failures & state anomalies"
+              : "Benchmark failure patterns for root-cause and AI verification"}
+          </span>
+        </div>
+
+        {tabMode === "database" ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
                   <th className="py-3 px-4">Incident Identity</th>
                   <th className="py-3 px-4">Payment & Order ID</th>
                   <th className="py-3 px-4">Operational Status</th>
-                  <th className="py-3 px-4">Priority / Severity</th>
+                  <th className="py-3 px-4">Urgency & Severity</th>
                   <th className="py-3 px-4">Tags & Assignee</th>
                   <th className="py-3 px-4">Detected</th>
                   <th className="py-3 px-4 text-right">Action</th>
@@ -434,7 +454,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                     return (
                       <tr
                         key={inc.id}
-                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition group cursor-pointer"
+                        className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/15 transition group cursor-pointer"
                         onClick={() =>
                           onSelectIncident(paymentId, {
                             id: inc.id,
@@ -450,10 +470,10 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                           })
                         }
                       >
-                        {/* Incident Type & Title */}
+                        {/* 1. Incident Identity & Description */}
                         <td className="py-3.5 px-4">
                           <div className="space-y-0.5 max-w-xs">
-                            <span className="font-semibold text-slate-900 dark:text-slate-100 block truncate">
+                            <span className="font-semibold text-slate-900 dark:text-white text-xs group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors block truncate">
                               {inc.incident_type}
                             </span>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
@@ -462,41 +482,36 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                           </div>
                         </td>
 
-                        {/* Payment & Order IDs */}
+                        {/* 2. Payment & Order IDs */}
                         <td className="py-3.5 px-4 font-mono text-[11px]">
-                          <span className="text-blue-600 dark:text-blue-400 font-medium block truncate max-w-[150px]">
+                          <span className="text-indigo-600 dark:text-indigo-400 font-semibold block truncate max-w-[150px]">
                             {paymentId}
                           </span>
-                          <span className="text-slate-400 truncate block max-w-[150px]">
+                          <span className="text-slate-400 dark:text-slate-500 truncate block max-w-[150px] text-[10px]">
                             {inc.order_id || "—"}
                           </span>
                         </td>
 
-                        {/* Operational Status */}
+                        {/* 3. Operational Status */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           {getStatusBadge(opStatus)}
                         </td>
 
-                        {/* Priority (Urgency) vs Technical Severity (Impact) */}
+                        {/* 4. Priority (Urgency) & Technical Severity (Impact) */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">
-                                Urgency:
-                              </span>
                               {getPriorityBadge(priority)}
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">
-                                System:
-                              </span>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                              <span className="text-slate-400 dark:text-slate-500">Impact:</span>
                               <span
-                                className={`inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                                className={`font-bold ${
                                   techSeverity === "HIGH"
-                                    ? "text-red-600 dark:text-red-400"
+                                    ? "text-rose-600 dark:text-rose-400"
                                     : techSeverity === "MEDIUM"
                                     ? "text-amber-600 dark:text-amber-400"
-                                    : "text-slate-500 dark:text-slate-400"
+                                    : "text-slate-600 dark:text-slate-300"
                                 }`}
                               >
                                 {techSeverity}
@@ -505,17 +520,17 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                           </div>
                         </td>
 
-                        {/* Tags & Assignee */}
+                        {/* 5. Tags & Assignee */}
                         <td className="py-3.5 px-4">
                           <div className="space-y-1.5 max-w-[200px]">
                             {/* Assignee indicator */}
-                            <div className="flex items-center gap-1 text-[11px]">
+                            <div className="flex items-center gap-1.5 text-[11px]">
                               <User className="w-3 h-3 text-slate-400 shrink-0" />
                               <span
                                 className={`truncate ${
                                   assignee
                                     ? "text-slate-800 dark:text-slate-200 font-medium"
-                                    : "text-slate-400 italic"
+                                    : "text-slate-400 dark:text-slate-500 italic"
                                 }`}
                               >
                                 {assignee || "Unassigned"}
@@ -545,7 +560,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                           </div>
                         </td>
 
-                        {/* Detected / Last Updated */}
+                        {/* 6. Detected / Last Updated */}
                         <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {inc.detected_at
                             ? new Date(inc.detected_at).toLocaleDateString("en-GB", {
@@ -562,7 +577,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
                             : "Live"}
                         </td>
 
-                        {/* Action */}
+                        {/* 7. Action */}
                         <td className="py-3.5 px-4 text-right whitespace-nowrap">
                           <button
                             type="button"
@@ -579,64 +594,66 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
               </tbody>
             </table>
           </div>
-        </div>
-      ) : (
-        /* Scenarios Golden Directory */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredScenarios.map((sc) => {
-            const isReplaying = loadingScenarioId === sc.scenario_id;
-            const expectedAi = sc.ground_truth.expected_ai_activated;
-            const expectedConfidence = sc.ground_truth.expected_confidence || "HIGH";
+        ) : (
+          /* Scenarios Golden Directory */
+          <div className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredScenarios.map((sc) => {
+                const isReplaying = loadingScenarioId === sc.scenario_id;
+                const expectedAi = sc.ground_truth.expected_ai_activated;
+                const expectedConfidence = sc.ground_truth.expected_confidence || "HIGH";
 
-            return (
-              <div
-                key={sc.scenario_id}
-                className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 hover:border-indigo-500/50 transition cursor-pointer"
-                onClick={() => onReplayScenario(sc.scenario_id)}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                      {sc.scenario_id}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        expectedAi
-                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
-                      }`}
-                    >
-                      {expectedAi ? "AI Triggered" : "Deterministic"}
-                    </span>
-                  </div>
-
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    {sc.name}
-                  </h3>
-
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                    {sc.description}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
-                  <span className="font-mono text-slate-500 dark:text-slate-400 text-[11px]">
-                    Expected: {expectedConfidence}
-                  </span>
-
-                  <button
-                    type="button"
-                    disabled={isReplaying}
-                    className="px-3 py-1 rounded bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-[11px] font-semibold transition cursor-pointer"
+                return (
+                  <div
+                    key={sc.scenario_id}
+                    className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4 hover:border-indigo-500/50 transition cursor-pointer"
+                    onClick={() => onReplayScenario(sc.scenario_id)}
                   >
-                    {isReplaying ? "Replaying..." : "Replay & Inspect →"}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                          {sc.scenario_id}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            expectedAi
+                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          {expectedAi ? "AI Triggered" : "Deterministic"}
+                        </span>
+                      </div>
+
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                        {sc.name}
+                      </h3>
+
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                        {sc.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
+                      <span className="font-mono text-slate-500 dark:text-slate-400 text-[11px]">
+                        Expected: {expectedConfidence}
+                      </span>
+
+                      <button
+                        type="button"
+                        disabled={isReplaying}
+                        className="px-3 py-1 rounded bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-[11px] font-semibold transition cursor-pointer"
+                      >
+                        {isReplaying ? "Replaying..." : "Replay & Inspect →"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
