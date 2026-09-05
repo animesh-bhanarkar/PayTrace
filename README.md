@@ -26,7 +26,7 @@ Render (FastAPI Backend)
 Supabase PostgreSQL (Persistence Layer)
 
 External Services:
-├── Google Gemini API (gemini-3.6-flash via google-genai SDK)
+├── Google Gemini API (gemini-3.7-flash with gemini-3.5-flash-lite fallback via google-genai SDK)
 └── Razorpay Test Mode (HMAC-SHA256 Signature Verification)
 ```
 
@@ -125,7 +125,7 @@ npm run dev
 ```
 
 ### 3. Run Test Suite
-Run the complete automated test suite (all 58 tests run in-process with zero external server dependencies):
+Run the complete automated test suite (all 179 tests run in-process with zero external server dependencies):
 ```bash
 python -m pytest tests/ -v --tb=short
 ```
@@ -134,7 +134,7 @@ python -m pytest tests/ -v --tb=short
 
 ## Known Limitations
 
-* **Render Free-Tier Cold Starts:** Render spins down free web services after 15 minutes of inactivity. The initial request after idle may experience a ~1291ms cold-start latency.
+* **Render Free-Tier Cold Starts:** Render spins down free web services after 15 minutes of inactivity. The first request after idle may take significantly longer while the service wakes.
 * **Local vs Deployed Database Latency:** Connecting to the Supabase PostgreSQL cluster (`ap-northeast-2`) from local development environments incurs ~2.4–2.6s latency due to geographic routing, whereas the deployed Render backend connects at ~366–370ms.
 * **Gemini Free-Tier Rate Limits:** The live investigation layer operates within Google Gemini's standard free-tier rate limits (15 RPM). Rapid automated looping on AI-enabled scenarios may encounter rate limits, in which case the system gracefully falls back to `INCONCLUSIVE`.
 * **Python SDK Warnings:** Minor upstream deprecation notices from Starlette `TestClient` and `google.genai` union types in Python 3.14 do not impact execution.
@@ -171,8 +171,7 @@ Real Gemini B1 baseline requires a valid GEMINI_API_KEY and live API calls.
 **What is NOT measured:** Real Gemini output quality, evidence-citation accuracy, or unsupported-claim rate. These require `--real-gemini`.
 
 **Corpus:** 15 scenarios across 8 anomaly categories. Three scenarios cannot be fully exercised in replay (see Known Limitations below).  
-**Run:** `python scripts/run_benchmark.py`  
-**Raw results:** [`results/benchmark.json`](results/benchmark.json)
+**Run:** `python scripts/run_benchmark.py`
 
 ### Results (Stub LLM — not real Gemini)
 
