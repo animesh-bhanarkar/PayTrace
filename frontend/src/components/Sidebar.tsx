@@ -1,5 +1,13 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { NavigationTab } from "../types";
+import {
+  Mail,
+  ExternalLink,
+  ChevronUp,
+  ChevronDown,
+  Copy,
+  Check,
+} from "lucide-react";
 
 interface SidebarProps {
   activeTab: NavigationTab;
@@ -18,6 +26,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile = false,
   onCloseMobile,
 }) => {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Close profile popover on click outside or Escape
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node) &&
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isProfileOpen]);
+
+  const handleCopyEmail = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText("animesh.bhanarkar@gmail.com");
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
   const navItems: Array<{ id: NavigationTab; label: string; icon: React.ReactNode; badge?: string }> = [
     {
       id: "overview",
@@ -192,7 +242,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom Section */}
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800/80 space-y-3">
+        <div className="p-3 border-t border-slate-100 dark:border-slate-800/80 space-y-3 relative">
           {/* Demo Mode Toggle Card */}
           <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between">
             <div className="space-y-0.5">
@@ -217,21 +267,135 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </label>
           </div>
 
-          {/* User Profile Card */}
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer">
-            <div className="w-7 h-7 rounded-full bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+          {/* Developer Profile Card */}
+          <div
+            ref={profileRef}
+            onClick={() => setIsProfileOpen((prev) => !prev)}
+            className={`flex items-center gap-3 p-2 rounded-lg transition cursor-pointer border ${
+              isProfileOpen
+                ? "bg-slate-100 dark:bg-slate-800 border-indigo-300 dark:border-indigo-800/80 shadow-2xs"
+                : "hover:bg-slate-50 dark:hover:bg-slate-800/50 border-transparent"
+            }`}
+            title="View Developer Contact & Profiles"
+          >
+            <div className="w-7 h-7 rounded-full bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
               A
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                animesh@example.com
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                Developed by
               </p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                Developer
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
+                Animesh Bhanarkar
               </p>
             </div>
-            <span className="text-xs text-slate-400">▾</span>
+            <span className="text-xs text-slate-400">
+              {isProfileOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </span>
           </div>
+
+          {/* Developer Profile Popover */}
+          {isProfileOpen && (
+            <div
+              ref={popoverRef}
+              className="absolute left-3 right-3 bottom-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 p-3.5 space-y-3 animate-in fade-in zoom-in-95 duration-150"
+            >
+              {/* Profile Popover Header */}
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    A
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-400 leading-tight">Developed by</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                      Animesh Bhanarkar
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsProfileOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 text-xs cursor-pointer"
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Contact Links */}
+              <div className="space-y-1.5 text-xs">
+                {/* Email */}
+                <a
+                  href="mailto:animesh.bhanarkar@gmail.com"
+                  className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition group"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Mail className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-[10px] text-slate-400 font-medium">Email</div>
+                      <div className="font-mono text-[11px] truncate text-slate-800 dark:text-slate-200">
+                        animesh.bhanarkar@gmail.com
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCopyEmail}
+                    className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 shrink-0"
+                    title="Copy email address"
+                  >
+                    {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </a>
+
+                {/* LinkedIn */}
+                <a
+                  href="https://www.linkedin.com/in/animesh-bhanarkar/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition group"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 shrink-0 fill-current" viewBox="0 0 24 24">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                    </svg>
+                    <div className="min-w-0">
+                      <div className="text-[10px] text-slate-400 font-medium">LinkedIn</div>
+                      <div className="text-[11px] font-semibold truncate text-slate-800 dark:text-slate-200">
+                        Animesh Bhanarkar | LinkedIn
+                      </div>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-blue-500 shrink-0" />
+                </a>
+
+                {/* GitHub */}
+                <a
+                  href="https://github.com/animesh-bhanarkar"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition group"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white shrink-0 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z" />
+                    </svg>
+                    <div className="min-w-0">
+                      <div className="text-[10px] text-slate-400 font-medium">GitHub</div>
+                      <div className="text-[11px] font-mono truncate text-slate-800 dark:text-slate-200">
+                        github.com/animesh-bhanarkar
+                      </div>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white shrink-0" />
+                </a>
+              </div>
+
+              {/* Popover Footer Note */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-center text-slate-500 dark:text-slate-400">
+                ❤️ Thanks for checking out PayTrace!
+              </div>
+            </div>
+          )}
 
           {/* Subtle Copyright */}
           <div className="text-[10px] text-slate-400 px-2">

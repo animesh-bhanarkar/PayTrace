@@ -281,6 +281,7 @@ function PayTraceApp() {
           onBackToIncidents={handleBackToIncidents}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           title={getPageTitle()}
+          onSelectIncident={handleSelectIncident}
         />
 
         {/* Dynamic Main Body Content */}

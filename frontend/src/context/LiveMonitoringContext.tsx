@@ -38,13 +38,19 @@ export const LiveMonitoringProvider: React.FC<{ children: React.ReactNode }> = (
     };
   }, []);
 
-  const handleIncomingEvent = useCallback((item: LiveEventItem) => {
+  const handleIncomingEvent = useCallback((item: LiveEventItem, isInitial = false) => {
     if (item.id && item.id > cursorRef.current) {
       cursorRef.current = item.id;
     }
     setLastEvent(item);
-    setRecentEvents((prev) => [item, ...prev.slice(0, 49)]);
-    setUnreadCount((c) => c + 1);
+    setRecentEvents((prev) => {
+      // Deduplicate by ID
+      if (prev.some((e) => e.id === item.id)) return prev;
+      return [item, ...prev.slice(0, 49)];
+    });
+    if (!isInitial) {
+      setUnreadCount((c) => c + 1);
+    }
 
     // Notify registered subscribers
     subscribersRef.current.forEach((cb) => {
@@ -54,6 +60,28 @@ export const LiveMonitoringProvider: React.FC<{ children: React.ReactNode }> = (
         console.error("Live event subscriber error:", err);
       }
     });
+  }, []);
+
+  // Fetch initial batch of recent events on mount
+  useEffect(() => {
+    let isMounted = true;
+    fetchRecentLiveEvents(0, 20)
+      .then((res) => {
+        if (isMounted && res.events && res.events.length > 0) {
+          const events = res.events;
+          setRecentEvents(events);
+          if (events[0]?.id) {
+            cursorRef.current = Math.max(cursorRef.current, events[0].id);
+          }
+          // Set unread count to recent items count up to 3
+          setUnreadCount(Math.min(events.length, 3));
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const connect = useCallback(() => {

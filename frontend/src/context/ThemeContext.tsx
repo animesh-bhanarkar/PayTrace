@@ -4,7 +4,7 @@ type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme: () => void;
+  toggleTheme: (event?: React.MouseEvent | MouseEvent) => void;
   setTheme: (theme: Theme) => void;
 }
 
@@ -24,19 +24,63 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.classList.add("dark");
       root.classList.remove("light");
       root.style.colorScheme = "dark";
-      document.body.style.backgroundColor = "";
-      document.body.style.color = "";
     } else {
       root.classList.remove("dark");
       root.classList.add("light");
       root.style.colorScheme = "light";
-      document.body.style.backgroundColor = "";
-      document.body.style.color = "";
     }
   }, [theme]);
 
-  const toggleTheme = () => {
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+  const toggleTheme = (event?: React.MouseEvent | MouseEvent) => {
+    const isDark = theme === "dark";
+    const nextTheme: Theme = isDark ? "light" : "dark";
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Check if startViewTransition is available and reduced motion is disabled
+    const doc = document as any;
+    if (!doc.startViewTransition || prefersReducedMotion) {
+      setThemeState(nextTheme);
+      return;
+    }
+
+    const x = event?.clientX ?? window.innerWidth - 80;
+    const y = event?.clientY ?? 40;
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    const transition = doc.startViewTransition(() => {
+      setThemeState(nextTheme);
+      const root = document.documentElement;
+      if (nextTheme === "dark") {
+        root.classList.add("dark");
+        root.classList.remove("light");
+        root.style.colorScheme = "dark";
+      } else {
+        root.classList.remove("dark");
+        root.classList.add("light");
+        root.style.colorScheme = "light";
+      }
+    });
+
+    transition.ready?.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+        },
+        {
+          duration: 380,
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+          pseudoElement: "::view-transition-new(root)",
+        }
+      );
+    });
   };
 
   const setTheme = (t: Theme) => {
