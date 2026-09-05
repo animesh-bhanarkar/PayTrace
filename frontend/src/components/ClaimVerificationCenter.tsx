@@ -37,7 +37,7 @@ export const ClaimVerificationCenter: React.FC<ClaimVerificationCenterProps> = (
     loadData();
   }, []);
 
-  const claims = data?.claims || [];
+  const claims = (data?.claims || []).filter((c) => c.statement.trim() !== "");
 
   const filteredClaims = claims.filter((c) => {
     if (verdictFilter !== "ALL" && c.verdict !== verdictFilter) return false;

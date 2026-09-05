@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-04T17:19:29.070049+00:00Z",
+  "generated_at": "2026-09-04T23:56:07.105814+00:00Z",
   "benchmark_version": "2.0-hardened",
   "total_scenarios": 15,
   "scenario_ids": [
@@ -154,7 +154,7 @@
       "pipeline_passed": 15,
       "pipeline_pass_rate": 1.0,
       "pipeline_denominator": "15/15 scenarios",
-      "avg_latency_ms": 11.6,
+      "avg_latency_ms": 22.5,
       "latency_note": "In-process TestClient timing only. Not a network round-trip measurement. Not a production latency claim."
     },
     "baseline_a": {
@@ -174,7 +174,7 @@
       "pipeline_passed": 10,
       "pipeline_pass_rate": 0.667,
       "pipeline_denominator": "10/15 scenarios",
-      "avg_latency_ms": 9.0,
+      "avg_latency_ms": 15.5,
       "latency_note": "In-process TestClient timing only. Not a network round-trip measurement. Not a production latency claim."
     },
     "baseline_b1": {
@@ -194,7 +194,7 @@
       "pipeline_passed": 0,
       "pipeline_pass_rate": 0.0,
       "pipeline_denominator": "0/15 scenarios",
-      "avg_latency_ms": 10.1,
+      "avg_latency_ms": 18.9,
       "latency_note": "In-process TestClient timing only. Not a network round-trip measurement. Not a production latency claim."
     }
   },
@@ -226,7 +226,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 45.7,
+        "latency_ms": 116.9,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -245,7 +245,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 14.1,
+        "latency_ms": 16.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -266,7 +266,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 12.0,
+        "latency_ms": 15.0,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -301,7 +301,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 12.5,
+        "latency_ms": 13.9,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -326,7 +326,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 12.5,
+        "latency_ms": 13.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -350,7 +350,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 13.2,
+        "latency_ms": 17.1,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -385,7 +385,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 12.1,
+        "latency_ms": 14.2,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -406,7 +406,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 9.6,
+        "latency_ms": 13.8,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -429,7 +429,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 10.2,
+        "latency_ms": 16.1,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -460,7 +460,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 9.8,
+        "latency_ms": 14.7,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -479,7 +479,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.2,
+        "latency_ms": 13.2,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -500,7 +500,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 9.7,
+        "latency_ms": 14.4,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -531,7 +531,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 10.9,
+        "latency_ms": 13.8,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -550,7 +550,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 10.6,
+        "latency_ms": 11.9,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -571,7 +571,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 12.8,
+        "latency_ms": 14.2,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -608,7 +608,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 11.0,
+        "latency_ms": 12.7,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -634,7 +634,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 10.3,
+        "latency_ms": 12.1,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -659,7 +659,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 12.9,
+        "latency_ms": 15.7,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -698,7 +698,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 9.0,
+        "latency_ms": 13.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -725,7 +725,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 10.0,
+        "latency_ms": 11.2,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -751,7 +751,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 12.6,
+        "latency_ms": 14.0,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -786,7 +786,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 10.0,
+        "latency_ms": 12.9,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -811,7 +811,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.1,
+        "latency_ms": 13.1,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -835,7 +835,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 9.3,
+        "latency_ms": 14.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -870,7 +870,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.0,
+        "latency_ms": 14.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -895,7 +895,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.3,
+        "latency_ms": 13.8,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -919,7 +919,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.2,
+        "latency_ms": 13.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -950,7 +950,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.0,
+        "latency_ms": 13.5,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -969,7 +969,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 6.9,
+        "latency_ms": 12.4,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -990,7 +990,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.3,
+        "latency_ms": 14.0,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -1021,7 +1021,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.2,
+        "latency_ms": 12.7,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -1040,7 +1040,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.5,
+        "latency_ms": 12.3,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -1061,7 +1061,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 11.8,
+        "latency_ms": 19.1,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -1092,7 +1092,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.8,
+        "latency_ms": 13.5,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -1111,7 +1111,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.2,
+        "latency_ms": 16.8,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -1132,7 +1132,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.2,
+        "latency_ms": 30.4,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -1163,7 +1163,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.6,
+        "latency_ms": 19.1,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -1182,7 +1182,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.3,
+        "latency_ms": 21.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -1203,7 +1203,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.8,
+        "latency_ms": 33.4,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -1238,7 +1238,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 6.6,
+        "latency_ms": 25.2,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -1259,7 +1259,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.6,
+        "latency_ms": 27.1,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -1282,7 +1282,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.5,
+        "latency_ms": 25.6,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     },
@@ -1313,7 +1313,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 8.0,
+        "latency_ms": 26.7,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_a": {
@@ -1332,7 +1332,7 @@
         "mismatches": [],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 6.3,
+        "latency_ms": 22.9,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       },
       "baseline_b1": {
@@ -1353,7 +1353,7 @@
         ],
         "llm_was_real": false,
         "llm_mode": "stubbed",
-        "latency_ms": 7.4,
+        "latency_ms": 25.7,
         "latency_note": "In-process TestClient timing. Not a production network latency."
       }
     }

@@ -164,7 +164,10 @@ def run_investigation(request: InvestigateRequest, db: Session = Depends(get_db)
 
     # ── Claim verification + confidence engine ────────────────────────────────
     if "error" not in investigation:
-        raw_claims = investigation.get("claims", [])
+        raw_claims = [
+            c for c in investigation.get("claims", [])
+            if isinstance(c, dict) and c.get("statement", "").strip()
+        ]
         verified_claims_list = verify_claims(raw_claims, evidence_package)
         confidence = compute_confidence(verified_claims_list, incidents, authoritative_result, True)
     else:

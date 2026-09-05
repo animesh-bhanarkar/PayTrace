@@ -268,8 +268,7 @@ export const PatternExplorer: React.FC<PatternExplorerProps> = ({ onSelectPaymen
                         </span>
                       </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {pattern.affected_payments_count} Payment ID
-                        {pattern.affected_payments_count === 1 ? "" : "s"}
+                        {`${pattern.affected_payments_count} Payment ID${pattern.affected_payments_count === 1 ? "" : "s"}`}
                       </p>
                     </div>
 

@@ -19,21 +19,19 @@ interface OverviewDashboardProps {
   scenarios: ScenarioFixtureItem[];
   onSelectIncident: (paymentId: string, meta?: Record<string, unknown>) => void;
   onNavigateTab: (tab: NavigationTab) => void;
+  onHeroSearch: (query: string) => void;
 }
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   incidents,
-  scenarios,
   onSelectIncident,
   onNavigateTab,
+  onHeroSearch,
 }) => {
   const [searchPid, setSearchPid] = useState("");
 
   // Calculate truthful aggregate metrics
   const totalIncidents = incidents.length;
-  const highSeverityCount = incidents.filter(
-    (i) => (i.severity || "").toUpperCase() === "HIGH"
-  ).length;
 
   // Operational status breakdown (Phase 6)
   const openCount = incidents.filter(
@@ -61,9 +59,10 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
 
   const handleDirectInvestigate = (e: React.FormEvent) => {
     e.preventDefault();
-    const pid = searchPid.trim();
-    if (!pid) return;
-    onSelectIncident(pid);
+    const q = searchPid.trim();
+    if (!q) return;
+    onHeroSearch(q);
+    setSearchPid("");
   };
 
   return (
@@ -89,11 +88,11 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           <form onSubmit={handleDirectInvestigate} className="pt-2 flex flex-col sm:flex-row gap-2.5 max-w-xl">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
+            <input
                 type="text"
                 value={searchPid}
                 onChange={(e) => setSearchPid(e.target.value)}
-                placeholder="Enter payment_id (e.g. pay_live_001, pay_test_...)"
+                placeholder="Search payment ID, order ID, type… (e.g. pay_001, failed)"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700/80 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono shadow-inner"
               />
             </div>
@@ -102,7 +101,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               disabled={!searchPid.trim()}
               className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             >
-              <span>Investigate</span>
+              <span>Search</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
@@ -112,120 +111,34 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
         <div className="absolute -right-16 -top-16 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
       </div>
 
-      {/* ── Operational Workflow KPI Grid (Phase 6) ────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        {/* Metric 1: Open */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>Open Incidents</span>
-            <AlertTriangle className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
-            {openCount}
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            {totalIncidents} total • {scenarios.length} test scenarios
-          </div>
+      {/* ── Status Summary Bar ─────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-3 px-1">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-slate-700 dark:text-slate-300">
+          <AlertTriangle className="w-3.5 h-3.5 text-slate-400" />
+          <span>{openCount} Open</span>
         </div>
-
-        {/* Metric 2: Investigating */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>Investigating</span>
-            <Clock className="w-4 h-4 text-indigo-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
-            {investigatingCount}
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Under active human analysis
-          </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-indigo-600 dark:text-indigo-400">
+          <Clock className="w-3.5 h-3.5" />
+          <span>{investigatingCount} Investigating</span>
         </div>
-
-        {/* Metric 3: Action Required */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>Action Required</span>
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
+        {actionRequiredCount > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 shadow-2xs text-xs font-semibold text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>{actionRequiredCount} Action Required</span>
           </div>
-          <div className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
-            {actionRequiredCount}
+        )}
+        {highPriorityUnresolved > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 shadow-2xs text-xs font-semibold text-rose-700 dark:text-rose-400">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>{highPriorityUnresolved} High/Critical</span>
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Escalated or merchant outreach
-          </div>
+        )}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>{resolvedCount} Resolved</span>
         </div>
-
-        {/* Metric 4: High/Critical Priority */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>High/Critical Triage</span>
-            <AlertTriangle className="w-4 h-4 text-rose-500" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">
-            {highPriorityUnresolved}
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Unresolved triage priority
-          </div>
-        </div>
-
-        {/* Metric 5: Resolved */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1 transition col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
-            <span>Operationally Resolved</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-            {resolvedCount}
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Remediation confirmed
-          </div>
-        </div>
-      </div>
-
-      {/* ── Technical Diagnostics & AI Gate Strip ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold text-xs">
-              !
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-slate-900 dark:text-white block">
-                Technical High-Severity Anomalies
-              </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                Payment state mismatches & invalid lifecycle transitions
-              </span>
-            </div>
-          </div>
-          <span className="text-lg font-bold font-mono text-rose-600 dark:text-rose-400">
-            {highSeverityCount}
-          </span>
-        </div>
-
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-xs">
-              ⚡
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-slate-900 dark:text-white block">
-                Deterministic vs. AI Gate Split
-              </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                {deterministicCount} processed deterministically
-              </span>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-lg font-bold font-mono text-indigo-600 dark:text-indigo-400">
-              {aiActivatedCount}
-            </span>
-            <span className="text-[10px] text-slate-400 block">AI Triggered</span>
-          </div>
+        <div className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+          {totalIncidents} total · {aiActivatedCount} AI-activated · {deterministicCount} deterministic
         </div>
       </div>
 

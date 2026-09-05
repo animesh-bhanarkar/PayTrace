@@ -44,6 +44,9 @@ function PayTraceApp() {
   const [demoMode, setDemoMode] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Hero search query threaded to GlobalSearch
+  const [heroSearchQuery, setHeroSearchQuery] = useState<string>("");
+
   // Data state
   const [incidentsList, setIncidentsList] = useState<IncidentRecord[]>([]);
   const [scenariosList, setScenariosList] = useState<ScenarioFixtureItem[]>([]);
@@ -216,6 +219,14 @@ function PayTraceApp() {
     setInvestigationError(null);
   };
 
+  // Hero search: switch to search tab with the submitted query
+  const handleHeroSearch = (query: string) => {
+    setHeroSearchQuery(query);
+    setActiveTab("search");
+    setSelectedPaymentId(null);
+    setInvestigationResult(null);
+  };
+
   const getPageTitle = () => {
     switch (activeTab) {
       case "overview":
@@ -311,6 +322,7 @@ function PayTraceApp() {
                 setActiveTab(tab);
                 setSelectedPaymentId(null);
               }}
+              onHeroSearch={handleHeroSearch}
             />
           ) : activeTab === "incidents" ? (
             /* VIEW: Incidents Explorer */
@@ -322,13 +334,14 @@ function PayTraceApp() {
               loadingScenarioId={activeLoadingScenario}
               loading={loadingData}
               onRefresh={refreshIncidents}
+              demoMode={demoMode}
             />
           ) : activeTab === "patterns" ? (
             /* VIEW: Pattern Explorer */
             <PatternExplorer onSelectPayment={handleSelectIncident} />
           ) : activeTab === "search" ? (
             /* VIEW: Global Search */
-            <GlobalSearch onSelectIncident={handleSelectIncident} />
+            <GlobalSearch onSelectIncident={handleSelectIncident} initialQuery={heroSearchQuery} />
           ) : activeTab === "timeline" ? (
             /* VIEW: Timeline Explorer */
             <TimelineExplorer onSelectIncident={handleSelectIncident} />

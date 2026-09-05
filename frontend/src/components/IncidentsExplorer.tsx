@@ -11,6 +11,7 @@ interface IncidentsExplorerProps {
   loadingScenarioId: string | null;
   loading: boolean;
   onRefresh?: () => void;
+  demoMode?: boolean;
 }
 
 export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
@@ -21,6 +22,7 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
   loadingScenarioId,
   loading,
   onRefresh,
+  demoMode = false,
 }) => {
   const { subscribeToEvents } = useLiveMonitoring();
   const [newEventsAlert, setNewEventsAlert] = useState<{ count: number; latestType: string } | null>(null);
@@ -47,7 +49,12 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
   const [severityFilter, setSeverityFilter] = useState<string>("ALL");
   const [tagFilter, setTagFilter] = useState<string>("ALL");
   const [webhookOnly, setWebhookOnly] = useState<boolean>(false);
-  const [tabMode, setTabMode] = useState<"database" | "scenarios">("database");
+  const [tabMode, setTabMode] = useState<"database" | "scenarios">(demoMode ? "scenarios" : "database");
+
+  // Sync tabMode with global demoMode toggle
+  useEffect(() => {
+    setTabMode(demoMode ? "scenarios" : "database");
+  }, [demoMode]);
 
   // Collect all unique tags across all incidents for filter dropdown
   const allTags = useMemo(() => {

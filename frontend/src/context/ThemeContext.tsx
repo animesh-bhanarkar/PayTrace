@@ -24,10 +24,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.classList.add("dark");
       root.classList.remove("light");
       root.style.colorScheme = "dark";
+      document.body.style.backgroundColor = "";
+      document.body.style.color = "";
     } else {
       root.classList.remove("dark");
       root.classList.add("light");
       root.style.colorScheme = "light";
+      document.body.style.backgroundColor = "";
+      document.body.style.color = "";
     }
   }, [theme]);
 
