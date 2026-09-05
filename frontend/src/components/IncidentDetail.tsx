@@ -447,6 +447,87 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
     }
   };
 
+  const getConfidenceDetails = () => {
+    const rawOutcome =
+      (investigationResult as any)?.investigation_outcome ||
+      (investigationResult as any)?.outcome;
+    const level = confidence?.level;
+    const isAbstained = Boolean(confidence?.abstain || level === "INCONCLUSIVE");
+    const scorePct = Math.round((confidence?.score || 0) * 100);
+
+    if (rawOutcome === "AI_UNAVAILABLE" || (aiActivated && (investigationResult.investigation as any)?.error)) {
+      return {
+        levelKey: "AI_UNAVAILABLE",
+        label: "AI UNAVAILABLE",
+        badgeClasses: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700",
+        dotClasses: "bg-slate-400",
+        verdictText: "AI service unreachable; evaluated using deterministic authoritative rules.",
+        isAbstained: false,
+        scorePct,
+      };
+    }
+
+    if (isAbstained) {
+      return {
+        levelKey: "INCONCLUSIVE",
+        label: "INCONCLUSIVE (ABSTAINED)",
+        badgeClasses: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
+        dotClasses: "bg-amber-500",
+        verdictText: "Evidence is incomplete or conflicting. PayTrace intentionally abstains to avoid false conclusions.",
+        isAbstained: true,
+        scorePct,
+      };
+    }
+
+    if (!aiActivated || rawOutcome === "DETERMINISTIC_RESULT") {
+      return {
+        levelKey: "DETERMINISTIC_RESULT",
+        label: level === "HIGH" ? "DETERMINISTIC RESULT (HIGH)" : `DETERMINISTIC RESULT (${level || "VERIFIED"})`,
+        badgeClasses: level === "HIGH"
+          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+          : "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30",
+        dotClasses: level === "HIGH" ? "bg-emerald-500" : "bg-blue-500",
+        verdictText: "Verified from cryptographic event stream and lifecycle invariants without AI speculation.",
+        isAbstained: false,
+        scorePct,
+      };
+    }
+
+    if (level === "HIGH" || rawOutcome === "RESOLVED_WITH_HIGH_CONFIDENCE") {
+      return {
+        levelKey: "HIGH",
+        label: "HIGH CONFIDENCE",
+        badgeClasses: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+        dotClasses: "bg-emerald-500",
+        verdictText: "Hypothesis strongly supported by complete event sequence and verified cryptographic claims.",
+        isAbstained: false,
+        scorePct,
+      };
+    }
+
+    if (level === "MEDIUM" || rawOutcome === "RESOLVED_WITH_MEDIUM_CONFIDENCE") {
+      return {
+        levelKey: "MEDIUM",
+        label: "MEDIUM CONFIDENCE",
+        badgeClasses: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
+        dotClasses: "bg-amber-500",
+        verdictText: "Core claims verified; some non-critical event markers or citations remain unverified.",
+        isAbstained: false,
+        scorePct,
+      };
+    }
+
+    return {
+      levelKey: "LOW",
+      label: "LOW CONFIDENCE",
+      badgeClasses: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30",
+      dotClasses: "bg-rose-500",
+      verdictText: "Contradictory or minimal evidence detected; manual investigator audit required.",
+      isAbstained: false,
+      scorePct,
+    };
+  };
+
   return (
     <div className="space-y-6">
       {/* ── Action Notice Banner ────────────────────────────────────────── */}
@@ -997,270 +1078,403 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
       )}
 
       {/* ── View: Main Overview Dual-Column Layout ───────────────────────────── */}
-      {activeViewTab === "overview" && (
-        <div className="space-y-6">
-          {/* Phase 8: Advanced AI Investigation Entrypoint Banner */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900 border border-indigo-500/30 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                <BrainCircuit className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    Advanced AI Investigation Available
+      {activeViewTab === "overview" && (() => {
+        const conf = getConfidenceDetails();
+        const rawRecon =
+          investigationResult.evidence_package?.reconstructed_state ||
+          investigationResult.authoritative_result?.authoritative_state;
+        const reconstructedState = String(
+          typeof rawRecon === "object" && rawRecon !== null
+            ? (rawRecon as any).current_state || (rawRecon as any).state || "authorized"
+            : rawRecon || "authorized"
+        );
+
+        return (
+          <div className="space-y-6">
+            {/* ── PRIMARY SECTION: Investigation Conclusion & Findings ──────── */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors">
+              {/* Top status bar: Category & Confidence calibration */}
+              <div className="px-6 py-3.5 bg-slate-50/80 dark:bg-slate-950/40 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Investigation Conclusion & Verdict
                   </span>
-                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 font-mono">
-                    Phase 8
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                    {aiActivated ? "AI-Assisted Investigation" : "Deterministic Rule Verification"}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Synthesize competing hypotheses, evaluate causal event traces, verify claims with 5-verdict precision, and explore counterfactuals.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setActiveViewTab("advanced")}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Open Advanced Workspace</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
 
-          {/* Phase 7: Razorpay Webhook Diagnostics Card */}
-          <WebhookDiagnosticsCard paymentId={paymentId} onSelectEvent={onSelectEvidence} />
+                <div className="flex items-center gap-2.5">
+                  {/* Scannable Confidence Badge */}
+                  <span className={`px-2.5 py-1 rounded-md text-xs font-bold font-mono tracking-wide border flex items-center gap-1.5 ${conf.badgeClasses}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${conf.dotClasses}`} />
+                    <span>{conf.label}</span>
+                    <span className="opacity-60 text-[11px] font-normal">({conf.scorePct}%)</span>
+                  </span>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Section 1: AI Investigation Transparency & Claims Card */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-              <ClaimsPanel
-                aiActivated={aiActivated}
-                activationReason={investigationResult.reason}
-                hypothesis={hypothesis}
-                verifiedClaims={verifiedClaims}
-                rejectedClaims={rejectedClaims}
-              />
-            </div>
-
-            {/* Section 2: Inline Traceability Graph Preview */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <Layers className="w-4 h-4 text-indigo-400" />
-                  Citation Traceability Graph
-                </span>
-                <button
-                  onClick={() => setActiveViewTab("graph")}
-                  className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                >
-                  Expand Full View →
-                </button>
-              </div>
-              <EvidenceClaimGraph
-                events={events}
-                verifiedClaims={verifiedClaims}
-                rejectedClaims={rejectedClaims}
-              />
-            </div>
-
-            {/* Section 3: Next Steps & Remediation Card */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="text-base text-amber-500">💡</span>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Recommended Remediation Step
-                </h4>
-              </div>
-
-              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-mono">
-                {recommendedStep}
-              </div>
-            </div>
-
-            {/* Section 4: Human Investigator Notes Panel */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-indigo-500" />
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Human Investigator Annotations ({notes.length})
-                  </h4>
-                </div>
-                <span className="text-[11px] text-slate-400">
-                  Persisted separately from AI claims
-                </span>
-              </div>
-
-              {/* Note Submission Form */}
-              <form onSubmit={handleAddNote} className="space-y-3 pt-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs border border-slate-200 dark:border-slate-700">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <input
-                      type="text"
-                      value={authorName}
-                      onChange={(e) => setAuthorName(e.target.value)}
-                      placeholder="Your Name / Handle"
-                      className="bg-transparent border-none text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none w-32"
-                    />
+                  {/* Operational State Pill */}
+                  <div className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                    {renderStatusIndicator()}
                   </div>
                 </div>
+              </div>
 
-                <textarea
-                  value={newNoteText}
-                  onChange={(e) => setNewNoteText(e.target.value)}
-                  placeholder="Add an investigator note, operational context, or merchant outreach status..."
-                  rows={2}
-                  maxLength={2048}
-                  className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                />
+              {/* Main Conclusion Body */}
+              <div className="p-6 space-y-5">
+                {/* PRIMARY: The Investigation Conclusion (Strongest visual element) */}
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                      Primary Finding & Root Cause
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
+                      {getIncidentTitle()}
+                    </h3>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">
-                    {newNoteText.length}/2048 characters
-                  </span>
-                  <button
-                    type="submit"
-                    disabled={!newNoteText.trim() || isSubmittingNote}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-medium transition shadow-xs cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{isSubmittingNote ? "Saving..." : "Add Annotation"}</span>
-                  </button>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed max-w-4xl">
+                    Payment state reconstructed as{" "}
+                    <strong className="font-mono uppercase font-bold text-slate-900 dark:text-white px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      {reconstructedState}
+                    </strong>
+                    . Evaluated <strong className="font-semibold text-slate-900 dark:text-white">{events.length}</strong> cryptographic lifecycle events with{" "}
+                    <strong className="font-semibold text-slate-900 dark:text-white">{incidents.length}</strong> verified anomalies.{" "}
+                    {confidence?.reason || investigationResult.reason}
+                  </p>
                 </div>
-              </form>
 
-              {/* Notes List */}
-              <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                {loadingNotes ? (
-                  <div className="text-xs text-slate-400 text-center py-4">
-                    Loading investigator annotations...
-                  </div>
-                ) : notes.length === 0 ? (
-                  <div className="text-xs text-slate-400 text-center py-4 italic">
-                    No annotations recorded for this incident yet.
-                  </div>
-                ) : (
-                  notes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/70 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5 text-xs"
-                    >
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {note.author}
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
-                            HUMAN
-                          </span>
-                        </div>
-                        <span className="font-mono text-[10px]">
-                          {note.created_at ? new Date(note.created_at).toLocaleString() : "Just now"}
-                        </span>
-                      </div>
-                      <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-                        {note.note_text}
+                {/* Inconclusive / Abstention Notice (Requirement 7) */}
+                {conf.isAbstained && (
+                  <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-900 dark:text-amber-200">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1 text-xs">
+                      <p className="font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                        Intentional Abstention — Insufficient / Conflicting Evidence
+                      </p>
+                      <p className="leading-relaxed">
+                        PayTrace has intentionally abstained from automated resolution to preserve audit-grade precision. Available webhook and API events do not conclusively prove or refute the anomaly without additional merchant telemetry.
                       </p>
                     </div>
-                  ))
+                  </div>
                 )}
-              </div>
-            </div>
-          </div>
 
-          {/* Right Context Column (5 cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* Section 1: Incident Summary Card */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 transition-colors">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Authoritative Lifecycle Summary
-              </h4>
-              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
-                Payment state reconstructed as{" "}
-                <strong className="font-semibold text-slate-900 dark:text-white uppercase font-mono">
-                  {String(investigationResult.evidence_package?.reconstructed_state || "authorized")}
-                </strong>
-                . Authoritative source rules evaluated the event stream and verified{" "}
-                {incidents.length} anomalies. Operational status is{" "}
-                <strong className="font-semibold text-slate-900 dark:text-white uppercase">
-                  {operationalStatus}
-                </strong>
-                . Investigation concluded with{" "}
-                <strong className="font-semibold text-slate-900 dark:text-white">
-                  {confidence.level}
-                </strong>{" "}
-                confidence calibration.
-              </p>
-            </div>
+                {/* SECONDARY: Four-Pillar Evidence Grounding Matrix (Requirement 2 & 4) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                  {/* Pillar 1: Deterministic Facts */}
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        1. Deterministic Facts
+                      </span>
+                      <span className="text-emerald-500 font-bold text-xs">✓</span>
+                    </div>
+                    <p className="text-xs text-slate-900 dark:text-slate-100 font-semibold truncate">
+                      State: {reconstructedState.toUpperCase()}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                      {events.length} validated events, {incidents.length} invariant checks.
+                    </p>
+                  </div>
 
-            {/* Section 2: Confidence Breakdown Radial Gauge */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-              <ConfidenceGauge
-                confidence={confidence}
-                reconstructedState={String(investigationResult.evidence_package?.reconstructed_state || "")}
-                incidentsCount={incidents.length}
-                totalEventsCount={events.length}
-                verifiedClaimsCount={verifiedClaims.length}
-                totalClaimsCount={verifiedClaims.length + rejectedClaims.length}
-              />
-            </div>
+                  {/* Pillar 2: AI Investigation / Hypothesis */}
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        2. AI Working Hypothesis
+                      </span>
+                      <span className="text-purple-500 font-bold text-xs">✦</span>
+                    </div>
+                    <p className="text-xs text-slate-900 dark:text-slate-100 font-semibold truncate">
+                      {aiActivated ? "Active Hypothesis" : "Gate Skipped (Deterministic)"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal line-clamp-2" title={hypothesis || investigationResult.reason}>
+                      {hypothesis || investigationResult.reason || "Deterministic evidence was sufficient."}
+                    </p>
+                  </div>
 
-            {/* Section 3: Key Evidence Card */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 transition-colors">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Key Evidence ({events.length})
-                </h4>
-                <button
-                  onClick={() => setActiveViewTab("timeline")}
-                  className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium hover:underline cursor-pointer"
-                >
-                  View timeline →
-                </button>
-              </div>
+                  {/* Pillar 3: Verified Claims */}
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        3. Verified Claims
+                      </span>
+                      <span className="text-blue-500 font-bold text-xs">📋</span>
+                    </div>
+                    <p className="text-xs text-slate-900 dark:text-slate-100 font-semibold truncate">
+                      {aiActivated
+                        ? `${verifiedClaims.length} Supported • ${rejectedClaims.length} Rejected`
+                        : "Direct Rule Invariants"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                      {aiActivated
+                        ? "Independently verified against cryptographic event log."
+                        : "No unverifiable AI claims introduced."}
+                    </p>
+                  </div>
 
-              <div className="space-y-2.5">
-                {events.slice(0, 3).map((ev, i) => {
-                  const evId = String(ev.evidence_id || ev.event_id || `evt_${i + 1}`);
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => onSelectEvidence?.(evId)}
-                      className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start justify-between gap-3 text-xs hover:border-blue-500/50 cursor-pointer transition-all group"
-                      title="Inspect cryptographic evidence detail"
+                  {/* Pillar 4: Final Calibration */}
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        4. Final Calibration
+                      </span>
+                      <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {conf.scorePct}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-900 dark:text-slate-100 font-semibold truncate">
+                      {conf.label}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal line-clamp-2" title={conf.verdictText}>
+                      {conf.verdictText}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Recommended Next Step / Remediation Action (Requirement 8) */}
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <span className="text-amber-500 text-base shrink-0 mt-0.5">💡</span>
+                    <div className="space-y-0.5 min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                        Recommended Remediation Step
+                      </span>
+                      <p className="text-xs font-mono text-slate-800 dark:text-slate-200 leading-relaxed">
+                        {recommendedStep}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+                    {!isResolved && (
+                      <button
+                        onClick={() => setIsResolutionModalOpen(true)}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Mark Resolved</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setActiveViewTab("timeline")}
+                      className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
                     >
-                      <div className="flex items-start gap-2 min-w-0">
-                        <span className="text-emerald-500 font-bold shrink-0 mt-0.5">✓</span>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-400 transition-colors">
-                            {String(ev.event_type || ev.event || "Payment event")}
-                          </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                            {evId} • via {String(ev.source || "webhook")}
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>View Timeline</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveViewTab("advanced")}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-medium transition cursor-pointer flex items-center gap-1"
+                      title="Open Phase 8 Advanced AI Workspace"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>Advanced AI</span>
+                      <ArrowRight className="w-3 h-3 ml-0.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── TERTIARY / SUPPORTING: Detailed Investigation Diagnostics ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column (7 cols) */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* Section 1: AI Investigation Transparency & Claims Card */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+                  <ClaimsPanel
+                    aiActivated={aiActivated}
+                    activationReason={investigationResult.reason}
+                    hypothesis={hypothesis}
+                    verifiedClaims={verifiedClaims}
+                    rejectedClaims={rejectedClaims}
+                  />
+                </div>
+
+                {/* Section 2: Inline Traceability Graph Preview */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-indigo-400" />
+                      Citation Traceability Graph
+                    </span>
+                    <button
+                      onClick={() => setActiveViewTab("graph")}
+                      className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      Expand Full View →
+                    </button>
+                  </div>
+                  <EvidenceClaimGraph
+                    events={events}
+                    verifiedClaims={verifiedClaims}
+                    rejectedClaims={rejectedClaims}
+                  />
+                </div>
+
+                {/* Section 3: Human Investigator Notes Panel */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-indigo-500" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Human Investigator Annotations ({notes.length})
+                      </h4>
+                    </div>
+                    <span className="text-[11px] text-slate-400">
+                      Persisted separately from AI claims
+                    </span>
+                  </div>
+
+                  {/* Note Submission Form */}
+                  <form onSubmit={handleAddNote} className="space-y-3 pt-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs border border-slate-200 dark:border-slate-700">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={authorName}
+                          onChange={(e) => setAuthorName(e.target.value)}
+                          placeholder="Your Name / Handle"
+                          className="bg-transparent border-none text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none w-32"
+                        />
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={newNoteText}
+                      onChange={(e) => setNewNoteText(e.target.value)}
+                      placeholder="Add an investigator note, operational context, or merchant outreach status..."
+                      rows={2}
+                      maxLength={2048}
+                      className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-slate-400">
+                        {newNoteText.length}/2048 characters
+                      </span>
+                      <button
+                        type="submit"
+                        disabled={!newNoteText.trim() || isSubmittingNote}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-medium transition shadow-xs cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{isSubmittingNote ? "Saving..." : "Add Annotation"}</span>
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Notes List */}
+                  <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    {loadingNotes ? (
+                      <div className="text-xs text-slate-400 text-center py-4">
+                        Loading investigator annotations...
+                      </div>
+                    ) : notes.length === 0 ? (
+                      <div className="text-xs text-slate-400 text-center py-4 italic">
+                        No annotations recorded for this incident yet.
+                      </div>
+                    ) : (
+                      notes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/70 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5 text-xs"
+                        >
+                          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {note.author}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
+                                HUMAN
+                              </span>
+                            </div>
+                            <span className="font-mono text-[10px]">
+                              {note.created_at ? new Date(note.created_at).toLocaleString() : "Just now"}
+                            </span>
+                          </div>
+                          <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                            {note.note_text}
                           </p>
                         </div>
-                      </div>
-                      <span className="text-slate-400 group-hover:text-blue-400 text-sm">📄</span>
-                    </div>
-                  );
-                })}
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Context Column (5 cols) */}
+              <div className="lg:col-span-5 space-y-6">
+                {/* Section 1: Confidence Breakdown Radial Gauge */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+                  <ConfidenceGauge
+                    confidence={confidence}
+                    reconstructedState={reconstructedState}
+                    incidentsCount={incidents.length}
+                    totalEventsCount={events.length}
+                    verifiedClaimsCount={verifiedClaims.length}
+                    totalClaimsCount={verifiedClaims.length + rejectedClaims.length}
+                  />
+                </div>
+
+                {/* Section 2: Key Evidence Card */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Key Evidence ({events.length})
+                    </h4>
+                    <button
+                      onClick={() => setActiveViewTab("timeline")}
+                      className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium hover:underline cursor-pointer"
+                    >
+                      View timeline →
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {events.slice(0, 3).map((ev, i) => {
+                      const evId = String(ev.evidence_id || ev.event_id || `evt_${i + 1}`);
+                      return (
+                        <div
+                          key={i}
+                          onClick={() => onSelectEvidence?.(evId)}
+                          className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start justify-between gap-3 text-xs hover:border-blue-500/50 cursor-pointer transition-all group"
+                          title="Inspect cryptographic evidence detail"
+                        >
+                          <div className="flex items-start gap-2 min-w-0">
+                            <span className="text-emerald-500 font-bold shrink-0 mt-0.5">✓</span>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-400 transition-colors">
+                                {String(ev.event_type || ev.event || "Payment event")}
+                              </p>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                                {evId} • via {String(ev.source || "webhook")}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-slate-400 group-hover:text-blue-400 text-sm">📄</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Section 3: Phase 7 Razorpay Webhook Diagnostics Card */}
+                <WebhookDiagnosticsCard paymentId={paymentId} onSelectEvent={onSelectEvidence} />
+
+                {/* Section 4: Historical Intelligence & Similar Incidents (Phase 5) */}
+                <SimilarIncidentsCard
+                  paymentId={paymentId}
+                  onSelectPayment={onSelectPayment}
+                />
               </div>
             </div>
-
-            {/* Section 4: Historical Intelligence & Similar Incidents (Phase 5) */}
-            <SimilarIncidentsCard
-              paymentId={paymentId}
-              onSelectPayment={onSelectPayment}
-            />
           </div>
-        </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Operational Resolution Modal ────────────────────────────────────── */}
       {isResolutionModalOpen && (
