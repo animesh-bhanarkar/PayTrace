@@ -1053,6 +1053,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
           verifiedClaims={verifiedClaims}
           rejectedClaims={rejectedClaims}
           hypothesis={hypothesis}
+          onSelectEvidence={onSelectEvidence}
         />
       )}
 
@@ -1290,6 +1291,8 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                     hypothesis={hypothesis}
                     verifiedClaims={verifiedClaims}
                     rejectedClaims={rejectedClaims}
+                    events={events}
+                    onSelectEvidence={onSelectEvidence}
                   />
                 </div>
 
@@ -1311,6 +1314,8 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                     events={events}
                     verifiedClaims={verifiedClaims}
                     rejectedClaims={rejectedClaims}
+                    hypothesis={hypothesis}
+                    onSelectEvidence={onSelectEvidence}
                   />
                 </div>
 
