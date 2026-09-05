@@ -384,6 +384,69 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
 
   const isResolved = operationalStatus === "RESOLVED";
 
+  const renderStatusIndicator = () => {
+    if (isResolved) {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          <span>RESOLVED</span>
+        </span>
+      );
+    }
+    if (operationalStatus === "INVESTIGATING") {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+          <Clock className="w-3.5 h-3.5 text-indigo-500 animate-spin shrink-0" style={{ animationDuration: "3s" }} />
+          <span>INVESTIGATING</span>
+        </span>
+      );
+    }
+    if (operationalStatus === "ACTION_REQUIRED") {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span>ACTION REQUIRED</span>
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+        <span>OPEN</span>
+      </span>
+    );
+  };
+
+  const renderPriorityIndicator = () => {
+    switch (priority) {
+      case "CRITICAL":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 uppercase">
+            ⚡ CRITICAL
+          </span>
+        );
+      case "HIGH":
+        return (
+          <span className="inline-flex items-center text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase">
+            HIGH
+          </span>
+        );
+      case "MEDIUM":
+        return (
+          <span className="inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400 uppercase">
+            MEDIUM
+          </span>
+        );
+      case "LOW":
+      default:
+        return (
+          <span className="inline-flex items-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+            LOW
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* ── Action Notice Banner ────────────────────────────────────────── */}
@@ -440,79 +503,129 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
       )}
 
       {/* ── Top Incident Identity & Operational Control Header ───────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5 transition-colors">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1.5 max-w-3xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={onBack}
-                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer sm:hidden"
-              >
-                <span>←</span>
-                <span>Back</span>
-              </button>
+      <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors space-y-4">
+        {/* Breadcrumb / Context & Identifiers Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>←</span>
+              <span>Back to incidents</span>
+            </button>
 
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                PAYMENT INCIDENT
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+
+            {/* Formal Incident Type */}
+            <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60">
+              {primaryIncident.incident_type}
+            </span>
+
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+
+            {/* Payment ID (Click to copy) */}
+            <button
+              type="button"
+              onClick={() => handleCopy(paymentId, "payment_id")}
+              className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+              title="Click to copy payment ID"
+            >
+              <span>{paymentId}</span>
+              <span className="text-slate-400 text-[10px]">
+                {copiedId === "payment_id" ? "✓" : "⎘"}
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            </button>
 
-              {/* Operational Status Badge */}
-              {isResolved ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                  <CheckCircle2 className="w-3 h-3" /> RESOLVED
-                </span>
-              ) : operationalStatus === "INVESTIGATING" ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">
-                  <Clock className="w-3 h-3 animate-spin" style={{ animationDuration: "3s" }} /> INVESTIGATING
-                </span>
-              ) : operationalStatus === "ACTION_REQUIRED" ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                  <AlertTriangle className="w-3 h-3" /> ACTION REQUIRED
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30">
-                  <AlertCircle className="w-3 h-3" /> OPEN
-                </span>
-              )}
+            {/* Order ID (Click to copy) */}
+            {orderId && (
+              <>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(orderId, "order_id")}
+                  className="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                  title="Click to copy order ID"
+                >
+                  <span>{orderId}</span>
+                  <span className="text-slate-400 text-[10px]">
+                    {copiedId === "order_id" ? "✓" : "⎘"}
+                  </span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
-              {/* Operational Priority Badge (Triage Urgency) */}
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
-                  priority === "CRITICAL"
-                    ? "bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40"
-                    : priority === "HIGH"
-                    ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                    : priority === "LOW"
-                    ? "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
-                    : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                }`}
-                title="Operational Urgency"
-              >
-                Urgency: {priority}
-              </span>
-
-              {/* Technical Severity Badge (System Impact) */}
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
-                System Severity: {primaryIncident.severity}
-              </span>
-            </div>
-
+        {/* Primary Headline Title & Actions Row */}
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+          <div className="space-y-2.5 max-w-3xl">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
               {getIncidentTitle()}
             </h1>
+
+            {/* Secondary Operational Triage Strip (Status, Urgency, Severity, Detected) */}
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              {/* Operational Status */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Status:</span>
+                {renderStatusIndicator()}
+              </div>
+
+              <span className="text-slate-200 dark:text-slate-800">|</span>
+
+              {/* Priority / Urgency */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Urgency:</span>
+                {renderPriorityIndicator()}
+              </div>
+
+              <span className="text-slate-200 dark:text-slate-800">|</span>
+
+              {/* Technical Severity */}
+              <div className="flex items-center gap-1 text-[11px] font-mono">
+                <span className="text-slate-400 dark:text-slate-500">System Impact:</span>
+                <span
+                  className={`font-semibold ${
+                    primaryIncident.severity === "HIGH"
+                      ? "text-rose-600 dark:text-rose-400"
+                      : primaryIncident.severity === "MEDIUM"
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-slate-600 dark:text-slate-400"
+                  }`}
+                >
+                  {primaryIncident.severity}
+                </span>
+              </div>
+
+              {incidentMeta?.created_at && (
+                <>
+                  <span className="text-slate-200 dark:text-slate-800">|</span>
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                    <span>
+                      Detected:{" "}
+                      {new Date(incidentMeta.created_at).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Right Action & Status Group */}
           <div className="flex flex-wrap items-center gap-2 self-start">
-            {/* Quick Action Buttons */}
             {isResolved ? (
               <button
                 type="button"
                 disabled={isResolving}
                 onClick={() => handleTransitionStatus("OPEN")}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
                 <span>Reopen Incident</span>
@@ -536,7 +649,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                     type="button"
                     disabled={isResolving}
                     onClick={() => handleTransitionStatus("ACTION_REQUIRED")}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 transition shadow-xs cursor-pointer disabled:opacity-50"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>Mark Action Required</span>
@@ -547,7 +660,11 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                   type="button"
                   disabled={isResolving}
                   onClick={() => setIsResolutionModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-xs cursor-pointer disabled:opacity-50"
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition shadow-xs cursor-pointer disabled:opacity-50 ${
+                    operationalStatus === "INVESTIGATING"
+                      ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                      : "bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
+                  }`}
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>Mark Resolved</span>
@@ -567,39 +684,13 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
           </div>
         </div>
 
-        {/* ── Operational Metadata Bar (Priority, Assignee, Tags, Identifiers) ── */}
+        {/* ── Operational Metadata Bar (Priority Selector, Assignee, Tags) ── */}
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs">
-          {/* Identifiers & Tags */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Payment ID Pill */}
-            <button
-              type="button"
-              onClick={() => handleCopy(paymentId, "payment_id")}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 font-mono font-medium hover:border-slate-400 transition cursor-pointer"
-              title="Click to copy payment ID"
-            >
-              <span>{paymentId}</span>
-              <span className="text-slate-400 text-[10px]">
-                {copiedId === "payment_id" ? "✓" : "⎘"}
-              </span>
-            </button>
-
-            {/* Order ID Pill */}
-            <button
-              type="button"
-              onClick={() => handleCopy(orderId, "order_id")}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 font-mono font-medium hover:border-slate-400 transition cursor-pointer"
-              title="Click to copy order ID"
-            >
-              <span>{orderId}</span>
-              <span className="text-slate-400 text-[10px]">
-                {copiedId === "order_id" ? "✓" : "⎘"}
-              </span>
-            </button>
-
+          {/* Left: Priority Selector & Assignee */}
+          <div className="flex flex-wrap items-center gap-3">
             {/* Priority Selector */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Priority:</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Set Priority:</span>
               <select
                 value={priority}
                 onChange={(e) => handleChangePriority(e.target.value as OperationalPriority)}
@@ -645,7 +736,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
                   setAssigneeDraft(assignee || "");
                   setIsEditingAssignee(true);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
                 title="Click to edit operational assignee (display metadata)"
               >
                 <User className="w-3 h-3 text-slate-400" />
@@ -657,7 +748,7 @@ export const IncidentDetail: React.FC<IncidentDetailProps> = ({
             )}
           </div>
 
-          {/* Tags Chips & Add Tag */}
+          {/* Right: Tags Chips & Add Tag */}
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
               <Tag className="w-3 h-3" />
