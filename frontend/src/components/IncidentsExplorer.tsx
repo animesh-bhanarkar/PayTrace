@@ -133,11 +133,6 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
   const resolvedCount = incidents.filter(
     (i) => (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() === "RESOLVED"
   ).length;
-  const highPriorityCount = incidents.filter((i) => {
-    const p = (i.priority || "MEDIUM").toUpperCase();
-    const isUnresolved = (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() !== "RESOLVED";
-    return isUnresolved && (p === "CRITICAL" || p === "HIGH");
-  }).length;
 
   const getStatusBadge = (opStatus: string) => {
     switch (opStatus) {
@@ -235,70 +230,39 @@ export const IncidentsExplorer: React.FC<IncidentsExplorerProps> = ({
         </div>
       )}
 
-      {/* ── Real Database Operational KPI Bar ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 transition-colors">
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-            Total Live Incidents
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900 dark:text-white font-mono">
-              {totalLiveIncidents}
-            </span>
-            <span className="text-xs text-blue-500 font-medium">Database</span>
-          </div>
+      {/* ── Compact Operational Status Summary ────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2.5 px-0.5">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-slate-700 dark:text-slate-300">
+          <span className="font-semibold text-slate-900 dark:text-white font-mono">{totalLiveIncidents}</span>
+          <span className="text-slate-500 dark:text-slate-400">Total Incidents</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 transition-colors">
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-            Active / In Triage
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900 dark:text-white font-mono">
-              {openCount + investigatingCount}
-            </span>
-            <span className="text-xs text-indigo-500">
-              {investigatingCount} Investigating
-            </span>
-          </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-slate-700 dark:text-slate-300">
+          <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
+          <span className="font-semibold text-slate-900 dark:text-white font-mono">{openCount}</span>
+          <span>Open</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 transition-colors">
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-            Action Required
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-amber-500 dark:text-amber-400 font-mono">
-              {actionRequiredCount}
-            </span>
-            <span className="text-xs text-amber-500/80">Needs Operator</span>
-          </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-indigo-600 dark:text-indigo-400">
+          <Clock className="w-3.5 h-3.5 text-indigo-500" />
+          <span className="font-semibold font-mono">{investigatingCount}</span>
+          <span>Investigating</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 transition-colors">
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-            High/Critical Unresolved
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-rose-500 dark:text-rose-400 font-mono">
-              {highPriorityCount}
-            </span>
-            <span className="text-xs text-rose-500/80">Triage Priority</span>
-          </div>
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-2xs text-xs font-medium ${
+          actionRequiredCount > 0
+            ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-400 font-semibold"
+            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+        }`}>
+          <AlertTriangle className={`w-3.5 h-3.5 ${actionRequiredCount > 0 ? "text-amber-500" : "text-slate-400"}`} />
+          <span className="font-semibold font-mono">{actionRequiredCount}</span>
+          <span>Action Required</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 transition-colors col-span-2 lg:col-span-1">
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-            Operationally Resolved
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-emerald-500 dark:text-emerald-400 font-mono">
-              {resolvedCount}
-            </span>
-            <span className="text-xs text-emerald-500/80">
-              {totalLiveIncidents > 0 ? `${Math.round((resolvedCount / totalLiveIncidents) * 100)}%` : "0%"}
-            </span>
-          </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+          <span className="font-semibold font-mono">{resolvedCount}</span>
+          <span>Resolved</span>
         </div>
       </div>
 
