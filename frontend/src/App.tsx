@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LiveMonitoringProvider } from "./context/LiveMonitoringContext";
+import { DemoModeProvider, useDemoMode } from "./context/DemoModeContext";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { IncidentsExplorer } from "./components/IncidentsExplorer";
@@ -31,9 +32,11 @@ import type {
 export default function App() {
   return (
     <ThemeProvider>
-      <LiveMonitoringProvider>
-        <PayTraceApp />
-      </LiveMonitoringProvider>
+      <DemoModeProvider>
+        <LiveMonitoringProvider>
+          <PayTraceApp />
+        </LiveMonitoringProvider>
+      </DemoModeProvider>
     </ThemeProvider>
   );
 }
@@ -41,7 +44,7 @@ export default function App() {
 function PayTraceApp() {
   // Navigation & UI state
   const [activeTab, setActiveTab] = useState<NavigationTab>("overview");
-  const [demoMode, setDemoMode] = useState<boolean>(false);
+  const { demoMode, toggleDemoMode } = useDemoMode();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Hero search query threaded to GlobalSearch
@@ -265,7 +268,7 @@ function PayTraceApp() {
           setInvestigationResult(null);
         }}
         demoMode={demoMode}
-        onToggleDemoMode={() => setDemoMode((prev) => !prev)}
+        onToggleDemoMode={toggleDemoMode}
         isOpenMobile={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
@@ -323,6 +326,8 @@ function PayTraceApp() {
                 setSelectedPaymentId(null);
               }}
               onHeroSearch={handleHeroSearch}
+              demoMode={demoMode}
+              onReplayScenario={handleReplayScenario}
             />
           ) : activeTab === "incidents" ? (
             /* VIEW: Incidents Explorer */

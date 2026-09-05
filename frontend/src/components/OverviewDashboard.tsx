@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { IncidentRecord, ScenarioFixtureItem, NavigationTab } from "../types";
 import {
   ShieldCheck,
@@ -20,39 +20,90 @@ interface OverviewDashboardProps {
   onSelectIncident: (paymentId: string, meta?: Record<string, unknown>) => void;
   onNavigateTab: (tab: NavigationTab) => void;
   onHeroSearch: (query: string) => void;
+  demoMode?: boolean;
+  onReplayScenario?: (scenarioId: string) => void;
 }
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   incidents,
+  scenarios,
   onSelectIncident,
   onNavigateTab,
   onHeroSearch,
+  demoMode = false,
+  onReplayScenario,
 }) => {
   const [searchPid, setSearchPid] = useState("");
 
+  // When demoMode is active, synthesize incident records from the golden scenarios fixture dataset
+  const demoIncidents: IncidentRecord[] = useMemo(() => {
+    return scenarios.map((sc) => {
+      const hasIncidents = Boolean(
+        sc.ground_truth?.expected_incidents && sc.ground_truth.expected_incidents.length > 0
+      );
+      const isAi = Boolean(sc.ground_truth?.expected_ai_activated);
+      const isResolved = !hasIncidents && !isAi && sc.ground_truth?.expected_state !== "failed";
+
+      const opStatus = isResolved
+        ? "RESOLVED"
+        : isAi
+        ? "ACTION_REQUIRED"
+        : hasIncidents
+        ? "OPEN"
+        : "INVESTIGATING";
+
+      const priority = isAi ? "HIGH" : hasIncidents ? "MEDIUM" : "LOW";
+      const severity = isAi ? "HIGH" : hasIncidents ? "MEDIUM" : "LOW";
+      const incidentType = hasIncidents
+        ? sc.ground_truth.expected_incidents!.join(", ")
+        : sc.ground_truth?.expected_state === "failed"
+        ? "payment_failed"
+        : "clean_flow";
+
+      return {
+        id: sc.scenario_id,
+        incident_type: incidentType,
+        payment_id: `pay_${sc.scenario_id}`,
+        order_id: `order_${sc.scenario_id}`,
+        description: `${sc.name}: ${sc.description}`,
+        severity,
+        evidence_ids: [],
+        resolved: isResolved,
+        operational_status: opStatus,
+        priority,
+        created_at: null,
+        detected_at: null,
+        ai_required: isAi,
+        tags: ["demo", "golden-scenario"],
+      };
+    });
+  }, [scenarios]);
+
+  const activeIncidents = demoMode ? demoIncidents : incidents;
+
   // Calculate truthful aggregate metrics
-  const totalIncidents = incidents.length;
+  const totalIncidents = activeIncidents.length;
 
   // Operational status breakdown (Phase 6)
-  const openCount = incidents.filter(
+  const openCount = activeIncidents.filter(
     (i) => (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() === "OPEN"
   ).length;
-  const investigatingCount = incidents.filter(
+  const investigatingCount = activeIncidents.filter(
     (i) => (i.operational_status || "").toUpperCase() === "INVESTIGATING"
   ).length;
-  const actionRequiredCount = incidents.filter(
+  const actionRequiredCount = activeIncidents.filter(
     (i) => (i.operational_status || "").toUpperCase() === "ACTION_REQUIRED"
   ).length;
-  const resolvedCount = incidents.filter(
+  const resolvedCount = activeIncidents.filter(
     (i) => (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() === "RESOLVED"
   ).length;
-  const highPriorityUnresolved = incidents.filter((i) => {
+  const highPriorityUnresolved = activeIncidents.filter((i) => {
     const isUnres = (i.operational_status || (i.resolved ? "RESOLVED" : "OPEN")).toUpperCase() !== "RESOLVED";
     const p = (i.priority || "MEDIUM").toUpperCase();
     return isUnres && (p === "CRITICAL" || p === "HIGH");
   }).length;
 
-  const aiActivatedCount = incidents.filter(
+  const aiActivatedCount = activeIncidents.filter(
     (i) => i.ai_required || (i.severity || "").toUpperCase() === "HIGH"
   ).length;
   const deterministicCount = totalIncidents - aiActivatedCount;
@@ -204,10 +255,12 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <span>Recent Payment Incidents</span>
+                <span>{demoMode ? "Demo Golden Scenarios" : "Recent Payment Incidents"}</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Real incident records from state reconstruction and webhook ingestion
+                {demoMode
+                  ? "Golden test scenarios from deterministic test suite"
+                  : "Real incident records from state reconstruction and webhook ingestion"}
               </p>
             </div>
 
@@ -221,24 +274,30 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           </div>
 
           <div className="space-y-2.5 pt-1">
-            {incidents.length === 0 ? (
+            {activeIncidents.length === 0 ? (
               <div className="p-8 text-center rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-500">
-                No incidents recorded in the database yet. Replay a scenario to generate test incidents.
+                {demoMode
+                  ? "No golden scenarios loaded from the backend."
+                  : "No incidents recorded in the database yet. Replay a scenario to generate test incidents."}
               </div>
             ) : (
-              incidents.slice(0, 5).map((inc, idx) => (
+              activeIncidents.slice(0, 5).map((inc, idx) => (
                 <div
                   key={inc.id || idx}
-                  onClick={() =>
-                    onSelectIncident(inc.payment_id || `pay_${inc.id}`, {
-                      id: inc.id,
-                      incident_type: inc.incident_type,
-                      severity: inc.severity,
-                      order_id: inc.order_id,
-                      resolved: inc.resolved,
-                      created_at: inc.created_at,
-                    })
-                  }
+                  onClick={() => {
+                    if (demoMode && onReplayScenario) {
+                      onReplayScenario(String(inc.id));
+                    } else {
+                      onSelectIncident(inc.payment_id || `pay_${inc.id}`, {
+                        id: inc.id,
+                        incident_type: inc.incident_type,
+                        severity: inc.severity,
+                        order_id: inc.order_id,
+                        resolved: inc.resolved,
+                        created_at: inc.created_at,
+                      });
+                    }
+                  }}
                   className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-500/50 hover:bg-slate-100 dark:hover:bg-slate-900 transition flex items-center justify-between gap-3 text-xs cursor-pointer group"
                 >
                   <div className="flex items-start gap-3 min-w-0">
@@ -258,7 +317,11 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                       </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                         {inc.payment_id || "pay_unassigned"} •{" "}
-                        {inc.created_at ? new Date(inc.created_at).toLocaleDateString() : "Live"}
+                        {demoMode
+                          ? "Demo Golden Scenario"
+                          : inc.created_at
+                          ? new Date(inc.created_at).toLocaleDateString()
+                          : "Live"}
                       </p>
                     </div>
                   </div>
@@ -266,11 +329,15 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                   <div className="flex items-center gap-2 shrink-0">
                     {inc.resolved ? (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        RESOLVED
+                        {demoMode ? "CLEAN" : "RESOLVED"}
+                      </span>
+                    ) : inc.operational_status === "ACTION_REQUIRED" ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                        ACTION REQUIRED
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                        OPEN
+                        {inc.operational_status || "OPEN"}
                       </span>
                     )}
                     <span className="text-slate-400 group-hover:translate-x-0.5 transition">→</span>
